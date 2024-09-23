@@ -1,0 +1,3 @@
+[submodule "rpg-generation-assets"]
+	path = rpg-generation-assets
+	url = git@github.com:DrakeRichards/rpg-generation-assets.git

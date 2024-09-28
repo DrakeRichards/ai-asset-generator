@@ -1,0 +1,52 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'rpg-asset-generator'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rpg-asset-generator",
+                    "--package=rpg-asset-generator"
+                ],
+                "filter": {
+                    "name": "rpg-asset-generator",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "--type",
+                "character"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG": "true"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'rpg-asset-generator'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=rpg-asset-generator",
+                    "--package=rpg-asset-generator"
+                ],
+                "filter": {
+                    "name": "rpg-asset-generator",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

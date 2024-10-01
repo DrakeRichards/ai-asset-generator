@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::assets::{Asset, AssetType};
+use crate::assets::{AssetType, Schema};
 use async_openai::{
     types::{
         ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
@@ -25,10 +25,10 @@ pub async fn generate_request(
 
     // Get the name (title) and description from the schema.
     // If either is missing, return an error and print the schema.
-    let description: Option<String> = get_property_value(asset_type.schema_string(), "description");
-    let name: String = get_property_value(asset_type.schema_string(), "title")
-        .ok_or("Schema is missing a title")?;
-    let schema: Option<Value> = serde_json::from_str(asset_type.schema_string()).ok();
+    let description: Option<String> = get_property_value(asset_type.schema(), "description");
+    let name: String =
+        get_property_value(asset_type.schema(), "title").ok_or("Schema is missing a title")?;
+    let schema: Option<Value> = serde_json::from_str(asset_type.schema()).ok();
 
     let response_format = ResponseFormat::JsonSchema {
         json_schema: ResponseFormatJsonSchema {

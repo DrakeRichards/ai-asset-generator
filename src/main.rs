@@ -35,8 +35,10 @@ async fn main() {
         None => asset_type.generate_initial_prompt(),
     };
 
+    // Send the request to OpenAI's API.
     let response = openai::generate_request(asset_type, initial_prompt);
 
+    // Handle the response.
     match response.await {
         Ok(response) => {
             // Print the response.

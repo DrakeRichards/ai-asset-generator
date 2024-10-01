@@ -1,9 +1,11 @@
 mod assets;
+mod openai;
 mod random_prompts;
 mod weighted_random;
 
 use assets::AssetType;
 use clap::Parser;
+use dotenv::dotenv;
 use random_prompts::RandomPrompt;
 
 /// Use OpenAI's ChatGPT to generate a random RPG asset, such as a character, item, or location.
@@ -18,14 +20,31 @@ struct Cli {
     prompt: Option<String>,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    // Load environment variables from a .env file.
+    dotenv().ok();
+
+    // Parse command-line arguments.
     let cli = Cli::parse();
+
+    // Generate a semi-random initial prompt.
     let asset_type: AssetType = cli.asset_type;
     let initial_prompt: String = match cli.prompt {
         Some(prompt) => prompt,
         None => asset_type.generate_initial_prompt(),
     };
-    println!("Initial prompt: {}", initial_prompt);
-    //let asset = generate_asset(asset_type, initial_prompt);
-    //println!("{}", asset.to_json_string().unwrap());
+
+    let response = openai::generate_request(asset_type, initial_prompt);
+
+    match response.await {
+        Ok(response) => {
+            // Print the response.
+            println!("{}", response);
+        }
+        Err(e) => {
+            // Print the error.
+            eprintln!("{}", e);
+        }
+    }
 }

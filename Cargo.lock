@@ -360,6 +360,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dotenv"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -671,6 +677,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1868808506b929d7b0cfa8f75951347aa71bb21144b7791bae35d9bccfcfe37a"
 dependencies = [
  "wasm-bindgen",
+]
+
+[[package]]
+name = "json-pointer"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fe841b94e719a482213cee19dd04927cf412f26d8dc84c5a446c081e49c2997"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
@@ -991,12 +1006,15 @@ dependencies = [
  "async-openai",
  "clap",
  "csv",
+ "dotenv",
  "prettyplease",
  "rand",
  "schemars",
  "serde",
+ "serde-json-schema",
  "serde_json",
  "syn",
+ "tokio",
  "typify",
 ]
 
@@ -1167,6 +1185,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8e3592472072e6e22e0a54d5904d9febf8508f65fb8552499a1abc7d1078c3a"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-json-schema"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "481fc729c42ca7b2e93ac70540d05d58511399fef0a28c0d1c163304b042a142"
+dependencies = [
+ "json-pointer",
+ "serde",
+ "serde_json",
+ "url",
 ]
 
 [[package]]
@@ -1528,6 +1558,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

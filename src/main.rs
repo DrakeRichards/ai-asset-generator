@@ -5,7 +5,7 @@ mod weighted_random;
 
 use assets::AssetType;
 use clap::Parser;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use random_prompts::RandomPrompt;
 
 /// Use OpenAI's ChatGPT to generate a random RPG asset, such as a character, item, or location.

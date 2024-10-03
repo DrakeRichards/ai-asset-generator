@@ -20,10 +20,18 @@ pub struct Cli {
     pub prompt: Option<String>,
 }
 
+/// Generate an asset using OpenAI's API.
+///
+/// The openai_async crate is used to send the request to OpenAI's API. This crate requires that the `OPENAI_API_KEY` environment variable be set.
 pub async fn generate_asset(
     asset_type: AssetType,
     prompt: Option<String>,
 ) -> Result<String, Box<dyn std::error::Error>> {
+    // Check if the environment variable is set.
+    if std::env::var("OPENAI_API_KEY").is_err() {
+        return Err("The OPENAI_API_KEY environment variable is not set.".into());
+    }
+
     // Generate a semi-random initial prompt.
     let initial_prompt: String = match prompt {
         Some(prompt) => prompt,

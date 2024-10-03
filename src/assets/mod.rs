@@ -37,3 +37,28 @@ impl Asset for AssetType {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used)]
+    #![allow(clippy::expect_used)]
+    use super::*;
+
+    #[test]
+    fn test_asset_type_schema() {
+        let character_schema: &str = CHARACTER_SCHEMA;
+        let location_schema: &str = LOCATION_SCHEMA;
+
+        assert!(!character_schema.is_empty());
+        assert!(!location_schema.is_empty());
+    }
+
+    #[test]
+    fn test_asset_type_system_prompt() {
+        let character_prompt: &str = AssetType::Character.system_prompt();
+        let location_prompt: &str = AssetType::Location.system_prompt();
+
+        assert!(!character_prompt.is_empty());
+        assert!(!location_prompt.is_empty());
+    }
+}

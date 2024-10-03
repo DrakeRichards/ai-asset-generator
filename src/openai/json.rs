@@ -1,12 +1,34 @@
 //! Functions to manipulate JSON strings.
 
+use serde::de::Error;
 use serde_json::{Result, Value};
 
 /// Get a property's value from a JSON string.
 /// The property must be a string.
-pub fn get_property_value(schema_text: &str, property: &str) -> Option<String> {
+pub fn get_string_value(schema_text: &str, property: &str) -> Option<String> {
     let schema: Value = serde_json::from_str(schema_text).ok()?;
     schema.get(property)?.as_str().map(|s| s.to_string())
+}
+
+/// Get the strings contained in an array property from a JSON string.
+fn get_array_strings(schema_text: &str, property_key: &str) -> Result<Vec<String>> {
+    let schema: Value = serde_json::from_str(schema_text)?;
+    let array = schema
+        .get(property_key)
+        .ok_or_else(|| Error::custom(format!("missing property {}", property_key)))?
+        .as_array()
+        .ok_or_else(|| {
+            Error::custom(format!("expected property {} to be an array", property_key))
+        })?;
+    let strings: Vec<String> = array
+        .iter()
+        .map(|v| {
+            v.as_str()
+                .ok_or(Error::custom("failed to convert array element to string"))
+                .map(|s| s.to_string())
+        })
+        .collect::<Result<Vec<String>>>()?;
+    Ok(strings)
 }
 
 /// Recursively remove any "default" properties from a JSON string.
@@ -84,7 +106,7 @@ fn add_required_properties(schema_text: &str) -> Result<String> {
 
     // Get a list of all properties.
     let all_properties: Vec<String> =
-        get_property_keys(schema_text, "properties").expect("No properties found.");
+        get_property_keys(schema_text, "properties").ok_or(Error::missing_field("properties"))?;
 
     // Add the "required" array if it doesn't exist.
     if schema.get("required").is_none() {
@@ -94,14 +116,7 @@ fn add_required_properties(schema_text: &str) -> Result<String> {
     }
 
     // What properties are already in the "required" array?
-    let required: Vec<String> = schema
-        .get("required")
-        .unwrap()
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|v| v.as_str().unwrap().to_string())
-        .collect();
+    let required: Vec<String> = get_array_strings(schema_text, "required")?;
 
     // What properties are missing from the "required" array?
     let missing: Vec<String> = all_properties
@@ -113,9 +128,9 @@ fn add_required_properties(schema_text: &str) -> Result<String> {
     // Add the missing properties to the "required" array.
     schema
         .get_mut("required")
-        .unwrap()
+        .ok_or_else(|| Error::missing_field("required"))?
         .as_array_mut()
-        .unwrap()
+        .ok_or_else(|| Error::custom("'required' property was not an array"))?
         .extend(missing.iter().map(|p| Value::String(p.clone())));
 
     Ok(schema.to_string())
@@ -131,20 +146,22 @@ pub fn clean_schema(schema_text: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used)]
+    #![allow(clippy::expect_used)]
     use super::*;
 
     #[test]
     fn test_get_property_value() {
         let schema = r#"{"title": "Character", "description": "A character in an RPG."}"#;
         assert_eq!(
-            get_property_value(schema, "title"),
+            get_string_value(schema, "title"),
             Some("Character".to_string())
         );
         assert_eq!(
-            get_property_value(schema, "description"),
+            get_string_value(schema, "description"),
             Some("A character in an RPG.".to_string())
         );
-        assert_eq!(get_property_value(schema, "unknown"), None);
+        assert_eq!(get_string_value(schema, "unknown"), None);
     }
 
     #[test]

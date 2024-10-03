@@ -49,15 +49,23 @@ impl WeightedItemList {
         }
 
         // Build a vector of WeightedItem structs from the CSV file.
-        let items = csv_reader
+        // Skip any rows that have an empty value or a weight of 0.
+        let csv_rows: Vec<WeightedItem> = csv_reader
             .deserialize()
-            .map(|item| item.unwrap())
+            .map(|row| {
+                row.unwrap_or_else(|_| WeightedItem {
+                    value: "".to_string(),
+                    weight: 0,
+                })
+            })
+            .filter(|item| !item.value.is_empty() || item.weight > 0)
             .collect::<Vec<WeightedItem>>();
-        let values: Vec<String> = items.iter().map(|item| item.value.clone()).collect();
-        let weights: Vec<u32> = items.iter().map(|item| item.weight).collect();
+        let values: Vec<String> = csv_rows.iter().map(|item| item.value.clone()).collect();
+        let weights: Vec<u32> = csv_rows.iter().map(|item| item.weight).collect();
 
         // Create a WeightedIndex from the weights vector.
-        let weighted_index: WeightedIndex<u32> = WeightedIndex::new(weights).unwrap();
+        let weighted_index: WeightedIndex<u32> = WeightedIndex::new(weights)
+            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid weights."))?;
 
         Ok(WeightedItemList {
             values,
@@ -68,6 +76,8 @@ impl WeightedItemList {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used)]
+    #![allow(clippy::expect_used)]
     use super::*;
 
     #[test]

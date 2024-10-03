@@ -1,3 +1,6 @@
+#![warn(clippy::unwrap_used)]
+#![warn(clippy::expect_used)]
+
 mod assets;
 mod openai;
 mod random_prompts;
@@ -24,7 +27,7 @@ pub async fn generate_asset(
     // Generate a semi-random initial prompt.
     let initial_prompt: String = match prompt {
         Some(prompt) => prompt,
-        None => asset_type.generate_initial_prompt(),
+        None => asset_type.generate_initial_prompt()?,
     };
 
     // Send the request to OpenAI's API.

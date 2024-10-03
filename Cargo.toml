@@ -8,6 +8,7 @@ async-openai = "0.24.0"
 clap = { version = "4.5.18", features = ["derive"] }
 csv = "1.3.0"
 dotenvy = "0.15.7"
+indicatif = "0.17.8"
 rand = { version = "0.8.5", features = ["alloc"] }
 schemars = "0.8"
 serde = { version = "1.0.210", features = ["serde_derive", "derive"] }

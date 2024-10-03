@@ -10,6 +10,7 @@ pub fn get_property_value(schema_text: &str, property: &str) -> Option<String> {
 }
 
 /// Recursively remove any "default" properties from a JSON string.
+/// This is necessary because the OpenAI API does not accept "default" properties.
 fn remove_defaults(schema_text: &str) -> Result<String> {
     let mut schema: Value = serde_json::from_str(schema_text)?;
 

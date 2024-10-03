@@ -1,9 +1,7 @@
 mod json;
-
-use std::error::Error;
-
 use crate::assets::{Asset, AssetType};
-use crate::openai::json::{clean_schema, get_property_value};
+use json::{clean_schema, get_property_value};
+
 use async_openai::{
     types::{
         ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
@@ -12,6 +10,7 @@ use async_openai::{
     Client,
 };
 use serde_json::Value;
+use std::error::Error;
 
 pub async fn generate_request(
     asset_type: AssetType,

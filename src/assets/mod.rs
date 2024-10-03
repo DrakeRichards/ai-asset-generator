@@ -15,7 +15,7 @@ pub enum AssetType {
     Location,
 }
 
-/// Assets can be serialized to JSON. They also follow a specific schema.
+/// Trait for assets that can be generated.
 pub trait Asset {
     /// The schema for the asset as a JSON string.
     fn schema(&self) -> &str;

@@ -2,6 +2,7 @@
 
 mod building;
 mod character;
+mod weighted_random;
 
 use crate::assets::AssetType;
 

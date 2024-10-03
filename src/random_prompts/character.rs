@@ -1,4 +1,4 @@
-use crate::weighted_random::WeightedItemList;
+use super::weighted_random::WeightedItemList;
 
 const GENDERS_FILE: &str = include_str!("../../rpg-generation-assets/characters/genders.csv");
 const RACES_FILE: &str = include_str!("../../rpg-generation-assets/characters/races.csv");

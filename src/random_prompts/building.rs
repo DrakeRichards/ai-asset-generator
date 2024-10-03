@@ -1,4 +1,4 @@
-use crate::weighted_random::WeightedItemList;
+use super::weighted_random::WeightedItemList;
 
 const ADJECTIVES_FILE: &str = include_str!("../../rpg-generation-assets/buildings/adjectives.csv");
 const TYPES_FILE: &str = include_str!("../../rpg-generation-assets/buildings/types.csv");

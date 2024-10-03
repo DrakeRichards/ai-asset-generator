@@ -1,7 +1,6 @@
 mod assets;
 mod openai;
 mod random_prompts;
-mod weighted_random;
 
 use assets::AssetType;
 use clap::Parser;

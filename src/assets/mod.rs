@@ -16,16 +16,24 @@ pub enum AssetType {
 }
 
 /// Assets can be serialized to JSON. They also follow a specific schema.
-pub trait Schema {
-    /// Get the schema for the asset as a JSON string.
+pub trait Asset {
+    /// The schema for the asset as a JSON string.
     fn schema(&self) -> &str;
+    /// The system prompt to use when generating the asset.
+    fn system_prompt(&self) -> &str;
 }
 
-impl Schema for AssetType {
+impl Asset for AssetType {
     fn schema(&self) -> &str {
         match self {
             AssetType::Character => CHARACTER_SCHEMA,
             AssetType::Location => LOCATION_SCHEMA,
+        }
+    }
+    fn system_prompt(&self) -> &str {
+        match self {
+            AssetType::Character => "You are a game master creating a new character for a Dungeons & Dragons RPG campaign set in the city of Waterdeep. Your descriptions should be concise but detailed. Use descriptive prose, but don't be overly verbose: keep each of your descriptions between 1-3 sentences. Ensure that the details you generate are appropriate for a fantasy setting.",
+            AssetType::Location => "You are a game master creating a new building for a Dungeons & Dragons RPG campaign set in the city of Waterdeep. Your descriptions should be concise but detailed. Use descriptive prose, but don't be overly verbose: keep each of your descriptions between 1-3 sentences. Ensure that the details you generate are appropriate for a fantasy setting.",
         }
     }
 }

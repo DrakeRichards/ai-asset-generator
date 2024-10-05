@@ -11,11 +11,15 @@ pub fn get_string_value(schema_text: &str, property: &str) -> Option<String> {
 }
 
 /// Get the strings contained in an array property from a JSON string.
-fn get_array_strings(schema_text: &str, property_key: &str) -> Result<Vec<String>> {
-    let schema: Value = serde_json::from_str(schema_text)?;
+fn get_array_strings(schema: &Value, property_key: &str) -> Result<Vec<String>> {
     let array = schema
         .get(property_key)
-        .ok_or_else(|| Error::custom(format!("missing property {}", property_key)))?
+        .ok_or_else(|| {
+            Error::custom(format!(
+                "failed to convert property to an array. No property named '{}' found in schema.",
+                property_key
+            ))
+        })?
         .as_array()
         .ok_or_else(|| {
             Error::custom(format!("expected property {} to be an array", property_key))
@@ -116,7 +120,7 @@ fn add_required_properties(schema_text: &str) -> Result<String> {
     }
 
     // What properties are already in the "required" array?
-    let required: Vec<String> = get_array_strings(schema_text, "required")?;
+    let required: Vec<String> = get_array_strings(&schema, "required")?;
 
     // What properties are missing from the "required" array?
     let missing: Vec<String> = all_properties
@@ -146,8 +150,6 @@ pub fn clean_schema(schema_text: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    #![allow(clippy::unwrap_used)]
-    #![allow(clippy::expect_used)]
     use super::*;
 
     #[test]
@@ -165,54 +167,60 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_defaults() {
+    fn test_remove_defaults() -> Result<()> {
         let schema = r#"{"title": "Character", "description": "A character in an RPG.", "properties": {"name": {"type": "string", "default": ""}}}"#;
         let expected = r#"{"title": "Character", "description": "A character in an RPG.", "properties": {"name": {"type": "string"}}}"#;
-        let result: String = remove_defaults(schema).unwrap();
+        let result: String = remove_defaults(schema)?;
         assert_eq!(
-            serde_json::from_str::<Value>(result.as_str())
-                .unwrap()
-                .as_object(),
-            serde_json::from_str::<Value>(expected).unwrap().as_object()
+            serde_json::from_str::<Value>(result.as_str())?.as_object(),
+            serde_json::from_str::<Value>(expected)?.as_object()
         );
+        Ok(())
     }
 
     #[test]
-    fn test_nested_default_removal() {
+    fn test_nested_default_removal() -> Result<()> {
         let schema = r#"{"title": "Character", "description": "A character in an RPG.", "properties": {"name": {"type": "string", "default": ""}, "stats": {"type": "object", "properties": {"strength": {"type": "number", "default": 0}}}}}"#;
         let expected = r#"{"title": "Character", "description": "A character in an RPG.", "properties": {"name": {"type": "string"}, "stats": {"type": "object", "properties": {"strength": {"type": "number"}}}}}"#;
-        let result: String = remove_defaults(schema).unwrap();
-        assert_eq!(
-            serde_json::from_str::<Value>(result.as_str())
-                .unwrap()
-                .as_object(),
-            serde_json::from_str::<Value>(expected).unwrap().as_object()
-        );
+        let result: String = remove_defaults(schema)?;
+        Ok(assert_eq!(
+            serde_json::from_str::<Value>(result.as_str())?.as_object(),
+            serde_json::from_str::<Value>(expected)?.as_object()
+        ))
     }
 
     #[test]
-    fn test_add_additional_properties() {
+    fn test_add_additional_properties() -> Result<()> {
         let schema = r#"{"title": "Character", "description": "A character in an RPG."}"#;
         let expected = r#"{"title":"Character","description":"A character in an RPG.","additionalProperties":false}"#;
-        let result: String = add_additional_properties(schema).unwrap();
-        assert_eq!(
-            serde_json::from_str::<Value>(result.as_str())
-                .unwrap()
-                .as_object(),
-            serde_json::from_str::<Value>(expected).unwrap().as_object()
-        );
+        let result: String = add_additional_properties(schema)?;
+        Ok(assert_eq!(
+            serde_json::from_str::<Value>(result.as_str())?.as_object(),
+            serde_json::from_str::<Value>(expected)?.as_object()
+        ))
     }
 
     #[test]
-    fn test_clean_schema() {
+    fn test_add_required_properties() -> Result<()> {
+        let schema = r#"{"title": "Character", "description": "A character in an RPG.", "properties": {"name": {"type": "string"}}}"#;
+        let expected = r#"{"title":"Character","description":"A character in an RPG.","properties":{"name":{"type":"string"}},"required":["name"]}"#;
+        let result: String = add_required_properties(schema)?;
+        Ok(assert_eq!(
+            serde_json::from_str::<Value>(result.as_str())?.as_object(),
+            serde_json::from_str::<Value>(expected)?.as_object()
+        ))
+    }
+
+    #[test]
+    fn test_clean_schema() -> Result<()> {
         let schema = r#"{"title": "Character", "type": "object", "description": "A character in an RPG.", "properties": {"name": {"type": "string", "default": ""}}}"#;
         let expected = r#"{"title":"Character", "type": "object", "description":"A character in an RPG.", "properties": {"name": {"type": "string"}}, "additionalProperties": false, "required": ["name"]}"#;
-        let expected: Value = serde_json::from_str(expected).unwrap();
-        let expected = expected.as_object().unwrap();
+        let expected: Value = serde_json::from_str(expected)?;
+        let expected = expected.as_object();
 
-        let cleaned_schema = clean_schema(schema).unwrap();
-        let result: Value = serde_json::from_str(cleaned_schema.as_str()).unwrap();
-        let result = result.as_object().unwrap();
-        assert_eq!(expected, result);
+        let cleaned_schema = clean_schema(schema)?;
+        let result: Value = serde_json::from_str(cleaned_schema.as_str())?;
+        let result = result.as_object();
+        Ok(assert_eq!(expected, result))
     }
 }

@@ -1,5 +1,5 @@
 mod json;
-use crate::assets::{Asset, AssetType};
+use crate::assets::AssetType;
 use json::{clean_schema, get_string_value};
 
 use async_openai::{
@@ -13,7 +13,7 @@ use serde_json::Value;
 use std::error::Error;
 
 pub async fn generate_request(
-    asset_type: AssetType,
+    asset_type: &AssetType,
     initial_prompt: String,
 ) -> Result<String, Box<dyn Error>> {
     let client = Client::new();

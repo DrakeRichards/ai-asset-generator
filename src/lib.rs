@@ -3,10 +3,7 @@
 
 mod assets;
 mod openai;
-mod random_prompts;
-
-use crate::assets::AssetType;
-use crate::random_prompts::RandomPrompt;
+use assets::AssetType;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -20,7 +17,7 @@ pub struct Cli {
     pub prompt: Option<String>,
 }
 
-/// Generate an asset using OpenAI's API.
+/// Generate an asset using OpenAI's API and generate a Markdown file for it.
 ///
 /// The openai_async crate is used to send the request to OpenAI's API. This crate requires that the `OPENAI_API_KEY` environment variable be set.
 pub async fn generate_asset(
@@ -39,7 +36,10 @@ pub async fn generate_asset(
     };
 
     // Send the request to OpenAI's API.
-    let response = openai::generate_request(asset_type, initial_prompt).await?;
+    let response = openai::generate_request(&asset_type, initial_prompt).await?;
 
-    Ok(response)
+    // Generate a Markdown file for the asset.
+    let markdown: String = asset_type.to_markdown(&response)?;
+
+    Ok(markdown)
 }

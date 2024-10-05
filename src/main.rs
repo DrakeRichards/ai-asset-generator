@@ -1,9 +1,8 @@
-use std::time::Duration;
-
 use clap::Parser;
 use dotenvy::dotenv;
 use indicatif::{ProgressBar, ProgressStyle};
 use rpg_asset_generator::{generate_asset, Cli};
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
@@ -11,10 +10,10 @@ async fn main() {
     dotenv().ok();
 
     // Parse command-line arguments.
-    let cli = Cli::parse();
+    let cli: Cli = Cli::parse();
 
     // Create a progress bar.
-    let spinner = ProgressBar::new_spinner();
+    let spinner: ProgressBar = ProgressBar::new_spinner();
     spinner.set_message("Generating asset...");
     spinner.enable_steady_tick(Duration::from_millis(100));
     spinner.set_style(
@@ -23,7 +22,8 @@ async fn main() {
     );
 
     // Generate the asset.
-    let asset = generate_asset(cli.asset_type, cli.prompt).await;
+    let asset: Result<String, Box<dyn std::error::Error>> =
+        generate_asset(cli.asset_type, cli.prompt).await;
 
     // Finish the progress bar.
     spinner.finish_and_clear();

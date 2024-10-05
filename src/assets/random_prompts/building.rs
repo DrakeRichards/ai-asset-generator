@@ -1,7 +1,8 @@
 use super::weighted_random::WeightedItemList;
 
-const ADJECTIVES_FILE: &str = include_str!("../../rpg-generation-assets/buildings/adjectives.csv");
-const TYPES_FILE: &str = include_str!("../../rpg-generation-assets/buildings/types.csv");
+const ADJECTIVES_FILE: &str =
+    include_str!("../../../rpg-generation-assets/buildings/adjectives.csv");
+const TYPES_FILE: &str = include_str!("../../../rpg-generation-assets/buildings/types.csv");
 
 pub fn generate_initial_prompt() -> Result<String, std::io::Error> {
     let adjectives: WeightedItemList = WeightedItemList::from_csv(ADJECTIVES_FILE)?;

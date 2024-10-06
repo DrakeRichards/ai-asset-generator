@@ -31,6 +31,11 @@ pub fn add_string_property(
     Ok(schema.to_string())
 }
 
+/// Convert a string to lowercase and replace spaces with dashes.
+pub fn to_slug(s: &str) -> String {
+    s.to_lowercase().replace(" ", "-")
+}
+
 /// Get the strings contained in an array property from a JSON string.
 pub fn get_array_strings(schema: &Value, property_key: &str) -> Result<Vec<String>> {
     let array = schema

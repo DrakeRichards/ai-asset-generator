@@ -1,3 +1,2 @@
-mod image;
-mod text;
-pub use text::generate_request;
+pub mod image;
+pub mod text;

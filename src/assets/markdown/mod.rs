@@ -20,3 +20,44 @@ pub fn fill_markdown_template(template: &str, values: HashMap<&str, String>) -> 
 
     filled_template
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fill_markdown_template() {
+        let template = "This is a template with a {{key}}.";
+        let mut values = HashMap::new();
+        values.insert("key", "value".to_string());
+
+        let filled_template = fill_markdown_template(template, values);
+
+        assert_eq!(filled_template, "This is a template with a value.");
+    }
+
+    #[test]
+    fn test_fill_markdown_template_multiple_values() {
+        let template = "This is a template with a {{key1}} and a {{key2}}.";
+        let mut values = HashMap::new();
+        values.insert("key1", "value1".to_string());
+        values.insert("key2", "value2".to_string());
+
+        let filled_template = fill_markdown_template(template, values);
+
+        assert_eq!(
+            filled_template,
+            "This is a template with a value1 and a value2."
+        );
+    }
+
+    #[test]
+    fn test_fill_markdown_template_missing_value() {
+        let template = "This is a template with a {{key}}.";
+        let values = HashMap::new();
+
+        let filled_template = fill_markdown_template(template, values);
+
+        assert_eq!(filled_template, "This is a template with a {{key}}.");
+    }
+}

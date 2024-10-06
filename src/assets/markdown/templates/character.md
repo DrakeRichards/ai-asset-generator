@@ -16,31 +16,11 @@ obsidianUIMode: preview
 
 ## Description
 
-### Overview
-
 {{overview}}
 
 ### Looks
 
 {{physicalDescription}}
-
-### Voice
-
-{{voiceDescription}}
-
-## Personality
-
-### Quirk
-
-{{behaviorQuirk}}
-
-### Likes
-
-{{likes}}
-
-### Dislikes
-
-{{dislikes}}
 
 ## Hooks
 

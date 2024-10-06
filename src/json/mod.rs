@@ -5,13 +5,34 @@ use serde_json::{Result, Value};
 
 /// Get a property's value from a JSON string.
 /// The property must be a string.
-pub fn get_string_value(schema_text: &str, property: &str) -> Option<String> {
-    let schema: Value = serde_json::from_str(schema_text).ok()?;
-    schema.get(property)?.as_str().map(|s| s.to_string())
+pub fn get_string_value(schema_text: &str, property: &'static str) -> Result<String> {
+    let schema: Value = serde_json::from_str(schema_text)?;
+    schema
+        .get(property)
+        .ok_or(Error::missing_field(property))?
+        .as_str()
+        .map(|s| s.to_string())
+        .ok_or(Error::custom("failed to convert property to a string"))
+}
+
+/// Add a string property to a JSON string.
+pub fn add_string_property(
+    schema_text: &str,
+    property_key: &str,
+    property_value: &str,
+) -> Result<String> {
+    let mut schema: Value = serde_json::from_str(schema_text)?;
+    schema.as_object_mut().map(|properties| {
+        properties.insert(
+            property_key.to_string(),
+            Value::String(property_value.to_string()),
+        )
+    });
+    Ok(schema.to_string())
 }
 
 /// Get the strings contained in an array property from a JSON string.
-fn get_array_strings(schema: &Value, property_key: &str) -> Result<Vec<String>> {
+pub fn get_array_strings(schema: &Value, property_key: &str) -> Result<Vec<String>> {
     let array = schema
         .get(property_key)
         .ok_or_else(|| {
@@ -153,17 +174,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_property_value() {
+    fn test_get_property_value() -> Result<()> {
         let schema = r#"{"title": "Character", "description": "A character in an RPG."}"#;
-        assert_eq!(
-            get_string_value(schema, "title"),
-            Some("Character".to_string())
-        );
-        assert_eq!(
-            get_string_value(schema, "description"),
-            Some("A character in an RPG.".to_string())
-        );
-        assert_eq!(get_string_value(schema, "unknown"), None);
+        let title = get_string_value(schema, "title")?;
+        let description = get_string_value(schema, "description")?;
+        assert_eq!(title, "Character".to_string());
+        assert_eq!(description, "A character in an RPG.".to_string());
+        Ok(())
     }
 
     #[test]

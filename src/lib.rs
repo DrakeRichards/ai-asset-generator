@@ -2,6 +2,7 @@
 #![warn(clippy::expect_used)]
 
 mod assets;
+mod json;
 mod openai;
 use assets::AssetType;
 use clap::Parser;
@@ -36,7 +37,7 @@ pub async fn generate_asset(
     };
 
     // Send the request to OpenAI's API.
-    let response = openai::generate_request(&asset_type, initial_prompt).await?;
+    let response: String = asset_type.generate_asset(initial_prompt).await?;
 
     // Generate a Markdown file for the asset.
     let markdown: String = asset_type.to_markdown(&response)?;

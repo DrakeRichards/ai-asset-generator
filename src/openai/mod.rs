@@ -1,6 +1,5 @@
-mod json;
 use crate::assets::AssetType;
-use json::{clean_schema, get_string_value};
+use crate::json::{clean_schema, get_string_value};
 
 use async_openai::{
     types::{
@@ -19,9 +18,9 @@ pub async fn generate_request(
     let client = Client::new();
 
     // Get the name (title) and description from the schema.
-    let description: Option<String> = get_string_value(asset_type.schema(), "description");
-    let name: String =
-        get_string_value(asset_type.schema(), "title").ok_or("Schema is missing a title")?;
+    // The schema might not have a description.
+    let description: Option<String> = get_string_value(asset_type.schema(), "description").ok();
+    let name: String = get_string_value(asset_type.schema(), "title")?;
 
     // Clean the schema for use with OpenAI's API.
     let cleaned_schema: String = clean_schema(asset_type.schema())?;

@@ -174,6 +174,18 @@ pub fn clean_schema(schema_text: &str) -> Result<String> {
     Ok(schema)
 }
 
+// Get the name (title) and description from the schema.
+pub fn get_schema_title(schema: &str) -> Result<String> {
+    let title = get_string_value(schema, "title")?;
+    Ok(to_slug(&title))
+}
+
+/// Get the description from a JSON schema.
+/// "description" is not a required field for the OpenAI API, so we use `Option` to handle the case where it is not present.
+pub fn get_schema_description(schema: &str) -> Option<String> {
+    get_string_value(schema, "description").ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

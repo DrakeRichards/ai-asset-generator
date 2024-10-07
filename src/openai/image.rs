@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 pub async fn generate_request(
     prompt: &str,
-    output_directory: PathBuf,
+    output_directory: &PathBuf,
 ) -> Result<PathBuf, OpenAIError> {
     let client = Client::new();
 
@@ -47,7 +47,7 @@ mod tests {
         let prompt = "A beautiful sunset over the ocean.";
         let output_directory = PathBuf::from(".");
 
-        let image = generate_request(prompt, output_directory).await?;
+        let image = generate_request(prompt, &output_directory).await?;
 
         assert!(image.exists());
 

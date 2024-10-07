@@ -1,4 +1,4 @@
-use super::weighted_random::WeightedItemList;
+use crate::weighted_random::WeightedItemList;
 
 const ADJECTIVES_FILE: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),

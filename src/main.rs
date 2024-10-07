@@ -5,12 +5,17 @@ use rpg_asset_generator::{generate_asset, Cli};
 use std::time::Duration;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables from a .env file.
     dotenv().ok();
 
     // Parse command-line arguments.
     let cli: Cli = Cli::parse();
+
+    // Check if the environment variable is set.
+    if std::env::var("OPENAI_API_KEY").is_err() {
+        return Err("The OPENAI_API_KEY environment variable is not set.".into());
+    }
 
     // Create a progress bar.
     let spinner: ProgressBar = ProgressBar::new_spinner();
@@ -21,20 +26,11 @@ async fn main() {
             .tick_strings(&["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]),
     );
 
-    // Generate the asset.
-    let asset: Result<String, Box<dyn std::error::Error>> =
-        generate_asset(cli.asset_type, cli.prompt).await;
+    // Generate the asset and save it to a file.
+    generate_asset(cli.asset_type, cli.prompt, cli.output_directory).await?;
 
     // Finish the progress bar.
     spinner.finish_and_clear();
 
-    // Print the asset or an error message.
-    match asset {
-        Ok(asset) => {
-            println!("{}", asset);
-        }
-        Err(e) => {
-            eprintln!("{}", e);
-        }
-    }
+    Ok(())
 }

@@ -1,5 +1,4 @@
-use crate::assets::AssetType;
-use crate::json::{clean_schema, get_string_value, to_slug};
+use crate::json::clean_schema;
 
 use async_openai::{
     types::{
@@ -11,26 +10,24 @@ use async_openai::{
 use serde_json::Value;
 use std::error::Error;
 
-pub async fn generate_request(
-    asset_type: &AssetType,
+pub async fn request_structured_response(
+    schema_name: &str,
+    schema_description: Option<String>,
+    schema_text: &str,
     initial_prompt: String,
+    system_prompt: String,
 ) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
 
-    // Get the name (title) and description from the schema.
-    // The schema might not have a description.
-    let description: Option<String> = get_string_value(asset_type.schema(), "description").ok();
-    let name: String = to_slug(&get_string_value(asset_type.schema(), "title")?);
-
     // Clean the schema for use with OpenAI's API.
-    let cleaned_schema: String = clean_schema(asset_type.schema())?;
+    let cleaned_schema: String = clean_schema(schema_text)?;
     let schema: Option<Value> = serde_json::from_str(cleaned_schema.as_str())?;
 
     // Set the response format to JSON schema.
     let response_format = ResponseFormat::JsonSchema {
         json_schema: ResponseFormatJsonSchema {
-            description,
-            name,
+            description: schema_description,
+            name: schema_name.to_string(),
             schema,
             strict: Some(true),
         },
@@ -40,7 +37,7 @@ pub async fn generate_request(
     let request = CreateChatCompletionRequestArgs::default()
         .model("gpt-4o-2024-08-06")
         .messages([
-            ChatCompletionRequestSystemMessage::from(asset_type.system_prompt()).into(),
+            ChatCompletionRequestSystemMessage::from(system_prompt).into(),
             ChatCompletionRequestUserMessage::from(initial_prompt).into(),
         ])
         .response_format(response_format)

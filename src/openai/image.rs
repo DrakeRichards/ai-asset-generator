@@ -40,18 +40,19 @@ mod tests {
     use dotenvy::dotenv;
 
     #[tokio::test]
-    async fn test_generate_request() {
+    async fn test_generate_request() -> Result<(), Box<dyn std::error::Error>> {
         // Load environment variables from a .env file.
         dotenv().ok();
 
         let prompt = "A beautiful sunset over the ocean.";
         let output_directory = PathBuf::from(".");
 
-        let image = generate_request(prompt, output_directory).await.unwrap();
+        let image = generate_request(prompt, output_directory).await?;
 
         assert!(image.exists());
 
         // Clean up the image file and any directories created.
-        std::fs::remove_file(image).unwrap();
+        std::fs::remove_file(image)?;
+        Ok(())
     }
 }

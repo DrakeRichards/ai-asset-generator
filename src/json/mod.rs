@@ -33,7 +33,7 @@ pub fn add_string_property(
 
 /// Convert a string to lowercase and replace spaces with dashes.
 pub fn to_slug(s: &str) -> String {
-    s.to_lowercase().replace(" ", "-")
+    s.to_lowercase().replace(' ', "-")
 }
 
 /// Get the strings contained in an array property from a JSON string.

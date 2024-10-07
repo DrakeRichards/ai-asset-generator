@@ -52,22 +52,20 @@ impl AssetType {
         response: &str,
         output_directory: PathBuf,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let image_prompt: Option<String> =
-            crate::json::get_string_value(&response, "dallePrompt").ok();
+        // Get the image prompt from the response.
+        // If the response does not contain an image prompt, return the response as-is.
+        let image_prompt: String = match crate::json::get_string_value(response, "dallePrompt") {
+            Ok(image_prompt) => image_prompt,
+            Err(_) => return Ok(response.to_string()),
+        };
 
-        // If the response does not contain an image prompt, return the response as is.
-        if image_prompt.is_none() {
-            return Ok(response.to_string());
-        }
-
-        let image_prompt: String = image_prompt.expect("Image prompt should exist.");
-        dbg!(&image_prompt);
-
+        // Generate the image from OpenAI's API and get the path to the generated image.
         let image_path: PathBuf =
             crate::openai::image::generate_request(&image_prompt, output_directory).await?;
 
+        // Add the image file name to the response.
         let modified_response = crate::json::add_string_property(
-            &response,
+            response,
             "imageFileName",
             image_path
                 .file_name()

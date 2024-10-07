@@ -1,9 +1,17 @@
 use super::weighted_random::WeightedItemList;
 
-const GENDERS_FILE: &str = include_str!("../../../rpg-generation-assets/characters/genders.csv");
-const RACES_FILE: &str = include_str!("../../../rpg-generation-assets/characters/races.csv");
-const OCCUPATIONS_FILE: &str =
-    include_str!("../../../rpg-generation-assets/characters/occupations.csv");
+const GENDERS_FILE: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/rpg-generation-assets/characters/genders.csv"
+));
+const RACES_FILE: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/rpg-generation-assets/characters/races.csv"
+));
+const OCCUPATIONS_FILE: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/rpg-generation-assets/characters/occupations.csv"
+));
 
 /// Generate a semi-random initial prompt for generating a character based on values provided in CSV files.
 pub fn generate_initial_prompt() -> Result<String, std::io::Error> {

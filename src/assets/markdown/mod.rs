@@ -2,8 +2,14 @@
 
 use std::collections::HashMap;
 
-pub const CHARACTER_TEMPLATE: &str = include_str!("templates/character.md");
-pub const BUILDING_TEMPLATE: &str = include_str!("templates/building.md");
+pub const CHARACTER_TEMPLATE: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/rpg-generation-assets/characters/character.md"
+));
+pub const BUILDING_TEMPLATE: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/rpg-generation-assets/buildings/building.md"
+));
 
 /// Replace the values in a Markdown template with the provided values.
 /// Values to replace in the template are surrounded by double curly braces.

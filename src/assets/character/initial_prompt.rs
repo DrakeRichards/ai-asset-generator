@@ -1,4 +1,5 @@
 use crate::weighted_random::WeightedItemList;
+use anyhow::Result;
 
 const GENDERS_FILE: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -14,7 +15,7 @@ const OCCUPATIONS_FILE: &str = include_str!(concat!(
 ));
 
 /// Generate a semi-random initial prompt for generating a character based on values provided in CSV files.
-pub fn generate_initial_prompt() -> Result<String, std::io::Error> {
+pub fn generate_initial_prompt() -> Result<String> {
     let genders: WeightedItemList = WeightedItemList::from_csv(GENDERS_FILE)?;
     let races: WeightedItemList = WeightedItemList::from_csv(RACES_FILE)?;
     let occupations: WeightedItemList = WeightedItemList::from_csv(OCCUPATIONS_FILE)?;

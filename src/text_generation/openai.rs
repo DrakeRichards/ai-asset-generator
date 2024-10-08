@@ -1,5 +1,6 @@
 use crate::json::clean_schema;
 
+use anyhow::{Error, Result};
 use async_openai::{
     types::{
         ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
@@ -8,7 +9,6 @@ use async_openai::{
     Client,
 };
 use serde_json::Value;
-use std::error::Error;
 
 pub async fn request_structured_response(
     schema_name: &str,
@@ -16,7 +16,7 @@ pub async fn request_structured_response(
     schema_text: &str,
     initial_prompt: String,
     system_prompt: String,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<String> {
     let client = Client::new();
 
     // Clean the schema for use with OpenAI's API.
@@ -53,5 +53,5 @@ pub async fn request_structured_response(
         }
     }
 
-    Err("No response content found".into())
+    Err(Error::msg("No response content found"))
 }

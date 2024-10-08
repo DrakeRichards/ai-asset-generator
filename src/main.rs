@@ -1,3 +1,4 @@
+use anyhow::{Error, Result};
 use clap::Parser;
 use dotenvy::dotenv;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -5,7 +6,7 @@ use rpg_asset_generator::{generate_asset, Cli};
 use std::time::Duration;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     // Load environment variables from a .env file.
     dotenv().ok();
 
@@ -14,7 +15,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Check if the environment variable is set.
     if std::env::var("OPENAI_API_KEY").is_err() {
-        return Err("The OPENAI_API_KEY environment variable is not set.".into());
+        return Err(Error::msg(
+            "The OPENAI_API_KEY environment variable is not set.",
+        ));
     }
 
     // Create a progress bar.

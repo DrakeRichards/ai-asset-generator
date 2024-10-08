@@ -1,4 +1,5 @@
 use crate::weighted_random::WeightedItemList;
+use anyhow::Result;
 
 const ADJECTIVES_FILE: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -9,7 +10,7 @@ const TYPES_FILE: &str = include_str!(concat!(
     "/rpg-generation-assets/buildings/types.csv"
 ));
 
-pub fn generate_initial_prompt() -> Result<String, std::io::Error> {
+pub fn generate_initial_prompt() -> Result<String> {
     let adjectives: WeightedItemList = WeightedItemList::from_csv(ADJECTIVES_FILE)?;
     let building_types: WeightedItemList = WeightedItemList::from_csv(TYPES_FILE)?;
 

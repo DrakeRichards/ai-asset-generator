@@ -10,6 +10,7 @@ mod weighted_random;
 
 use crate::assets::AssetType;
 use crate::image_generation::ImageProviders;
+use anyhow::Result;
 use clap::Parser;
 use std::path::{Path, PathBuf};
 
@@ -38,7 +39,7 @@ pub async fn generate_asset(
     prompt: Option<String>,
     output_directory: Option<String>,
     image_provider: Option<ImageProviders>,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<String> {
     // Convert the output directory to a PathBuf. If no output directory is specified, use the current directory.
     let output_directory: PathBuf =
         Path::new(&output_directory.unwrap_or_else(|| ".".to_string())).to_path_buf();

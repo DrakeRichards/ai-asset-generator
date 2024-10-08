@@ -1,6 +1,7 @@
 mod initial_prompt;
 
 use super::Asset;
+use anyhow::Result;
 use initial_prompt::generate_initial_prompt;
 
 pub struct Character;
@@ -16,11 +17,11 @@ impl Asset for Character {
         "/rpg-generation-assets/characters/character.md"
     ));
 
-    fn generate_initial_prompt() -> Result<String, Box<dyn std::error::Error>> {
-        generate_initial_prompt().map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
+    fn generate_initial_prompt() -> Result<String> {
+        generate_initial_prompt()
     }
 
-    fn post_process_response(response: &str) -> Result<String, Box<dyn std::error::Error>> {
+    fn post_process_response(response: &str) -> Result<String> {
         // Add the first name to the response schema.
         let first_name: String = get_first_name(response)?;
         let response = crate::json::add_string_property(response, "firstName", &first_name)?;
@@ -29,7 +30,7 @@ impl Asset for Character {
 }
 
 /// Get the first name of a character by splitting the "name" property on the first space.
-fn get_first_name(response: &str) -> serde_json::Result<String> {
+fn get_first_name(response: &str) -> Result<String> {
     // We can use expect here because we know that the "name" property is required in the schema.
     #![allow(clippy::expect_used)]
     let name = crate::json::get_string_value(response, "name")?;

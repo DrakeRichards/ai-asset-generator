@@ -1,5 +1,6 @@
 mod initial_prompt;
 use super::Asset;
+use anyhow::Result;
 use initial_prompt::generate_initial_prompt;
 
 pub struct Building;
@@ -17,7 +18,7 @@ impl Asset for Building {
         "/rpg-generation-assets/buildings/building.md"
     ));
 
-    fn generate_initial_prompt() -> Result<String, Box<dyn std::error::Error>> {
-        generate_initial_prompt().map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
+    fn generate_initial_prompt() -> Result<String> {
+        generate_initial_prompt()
     }
 }

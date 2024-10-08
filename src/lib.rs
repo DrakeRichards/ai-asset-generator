@@ -15,10 +15,13 @@ use clap::Parser;
 use std::path::{Path, PathBuf};
 
 #[derive(Parser)]
-#[command(about, long_about = None)]
+#[command(
+    long_about = "Generate an asset using OpenAI's API and save it to a markdown file. The openai_async crate is used to send the request to OpenAI's API. This crate requires that the `OPENAI_API_KEY` environment variable be set."
+)]
+/// Generate an asset using OpenAI's API and save it to a markdown file.
 pub struct Cli {
     /// The type of asset to generate.
-    #[arg(value_enum, short, long)]
+    #[clap(subcommand)]
     pub asset_type: AssetType,
     /// The initial prompt to use when generating the asset.
     #[arg(short, long)]
@@ -31,9 +34,7 @@ pub struct Cli {
     pub image_provider: Option<ImageProviders>,
 }
 
-/// Generate an asset using OpenAI's API and generate a Markdown file for it.
-///
-/// The openai_async crate is used to send the request to OpenAI's API. This crate requires that the `OPENAI_API_KEY` environment variable be set.
+/// Generate an asset and save it to a file.
 pub async fn generate_asset(
     asset_type: AssetType,
     prompt: Option<String>,

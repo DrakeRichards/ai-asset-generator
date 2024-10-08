@@ -8,16 +8,18 @@ use crate::image_generation::ImageProviders;
 use crate::json::{get_schema_description, get_schema_title};
 use crate::text_generation::openai::request_structured_response;
 use anyhow::Result;
-use clap::ValueEnum;
+use clap::Subcommand;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
 
+#[derive(Subcommand, Clone)]
 /// The type of asset to generate.
-#[derive(ValueEnum, Clone)]
 pub enum AssetType {
+    /// Generate a character.
     Character,
+    /// Generate a building.
     Building,
 }
 

@@ -22,7 +22,33 @@ Note: This project is still in the early stages of development. The resources us
 - [ ] Custom resource selection
 - [ ] Custom markdown templates
 
-## Usage
+## Installation / Usage
+
+### From Source
+
+1. Clone the repository:
+
+   ```bash
+   git clone git@github.com:DrakeRichards/rpg-asset-generator.git
+   ```
+
+1. Install the dependencies:
+
+   ```bash
+   cd rpg-asset-generator
+   cargo build --release
+   ```
+
+1. If using the OpenAI API (default), set the `OPENAI_API_KEY` environment variable to your OpenAI API key. Alternatively, you can save this key in a .env file in the same directory as the binary.
+1. Check the help message for usage instructions:
+
+   ```bash
+   ./target/release/rpg-asset-generator --help
+   ```
+
+### Binary
+
+Not yet implemented. I'll figure out how to do this later.
 
 1. Download the compiled binary from the [releases page](https://github.com/DrakeRichards/rpg-asset-generator/releases).
 1. If using the OpenAI API (default), set the `OPENAI_API_KEY` environment variable to your OpenAI API key. Alternatively, you can save this key in a .env file in the same directory as the binary.

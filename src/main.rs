@@ -27,7 +27,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Generate the asset and save it to a file.
-    generate_asset(cli.asset_type, cli.prompt, cli.output_directory).await?;
+    generate_asset(
+        cli.asset_type,
+        cli.prompt,
+        cli.output_directory,
+        cli.image_provider,
+    )
+    .await?;
 
     // Finish the progress bar.
     spinner.finish_and_clear();

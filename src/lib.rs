@@ -2,12 +2,14 @@
 #![warn(clippy::expect_used)]
 
 mod assets;
+mod image_generation;
 mod json;
 mod markdown;
-mod openai;
+mod text_generation;
 mod weighted_random;
 
 use crate::assets::AssetType;
+use crate::image_generation::ImageProviders;
 use clap::Parser;
 use std::path::{Path, PathBuf};
 
@@ -23,6 +25,9 @@ pub struct Cli {
     /// The output directory for the generated asset.
     #[arg(short, long)]
     pub output_directory: Option<String>,
+    /// The image provider to use when generating the asset.
+    #[arg(short, long)]
+    pub image_provider: Option<ImageProviders>,
 }
 
 /// Generate an asset using OpenAI's API and generate a Markdown file for it.
@@ -32,12 +37,18 @@ pub async fn generate_asset(
     asset_type: AssetType,
     prompt: Option<String>,
     output_directory: Option<String>,
+    image_provider: Option<ImageProviders>,
 ) -> Result<String, Box<dyn std::error::Error>> {
+    // Convert the output directory to a PathBuf. If no output directory is specified, use the current directory.
     let output_directory: PathBuf =
         Path::new(&output_directory.unwrap_or_else(|| ".".to_string())).to_path_buf();
+    // Set the image provider to OpenAI if no image provider is specified.
+    let image_provider: ImageProviders = image_provider.unwrap_or(ImageProviders::OpenAi);
+    // Generate the asset and return the Markdown.
     let asset = asset_type
-        .generate_asset_markdown(prompt, &output_directory)
+        .generate_asset_markdown(prompt, &output_directory, image_provider)
         .await;
+    // Save the asset to a file.
     match asset {
         Ok(asset) => {
             save_asset_to_file(&asset, output_directory)?;

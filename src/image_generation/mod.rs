@@ -1,6 +1,7 @@
 //! Generate images for RPG assets.
 
 mod openai;
+mod stable_diffusion;
 use anyhow::Result;
 use clap::ValueEnum;
 use std::path::{Path, PathBuf};
@@ -9,6 +10,7 @@ use std::path::{Path, PathBuf};
 #[derive(ValueEnum, Clone)]
 pub enum ImageProviders {
     OpenAi,
+    StableDiffusion,
 }
 
 /// Defines an image generation provider.
@@ -23,6 +25,10 @@ impl ImageProviders {
         match self {
             ImageProviders::OpenAi => {
                 openai::OpenAiProvider::generate_image(prompt, output_path).await
+            }
+            ImageProviders::StableDiffusion => {
+                stable_diffusion::StableDiffusionXLProvider::generate_image(prompt, output_path)
+                    .await
             }
         }
     }

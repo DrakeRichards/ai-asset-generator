@@ -28,14 +28,17 @@ impl AssetType {
         &self,
         prompt: Option<String>,
         output_directory: &Path,
-        image_provider: ImageProviders,
+        image_provider: Option<ImageProviders>,
+        as_json: bool,
     ) -> Result<String> {
         match self {
             AssetType::Character => {
-                character::Character::generate(prompt, output_directory, image_provider).await
+                character::Character::generate(prompt, output_directory, image_provider, as_json)
+                    .await
             }
             AssetType::Building => {
-                building::Building::generate(prompt, output_directory, image_provider).await
+                building::Building::generate(prompt, output_directory, image_provider, as_json)
+                    .await
             }
         }
     }
@@ -108,7 +111,8 @@ trait Asset {
     async fn generate(
         prompt: Option<String>,
         output_directory: &Path,
-        image_provider: ImageProviders,
+        image_provider: Option<ImageProviders>,
+        as_json: bool,
     ) -> Result<String> {
         // Get the schema name and description.
         let schema_name: String = get_schema_title(Self::JSON_SCHEMA)?;
@@ -130,8 +134,17 @@ trait Asset {
         )
         .await?;
 
-        // Add an image from DALL-E to the response.
-        response = Self::generate_image(&response, output_directory, image_provider).await?;
+        // Return the JSON schema if the JSON flag is set.
+        if as_json {
+            return Ok(response);
+        }
+
+        // Generate an image from the image provider.
+        // Save the resulting image to the same directory as the output Markdown file.
+        // If no image provider is specified, skip this step.
+        if let Some(image_provider) = image_provider {
+            response = Self::generate_image(&response, output_directory, image_provider).await?;
+        }
 
         // Do some post-processing on the response.
         response = Self::post_process_response(&response)?;

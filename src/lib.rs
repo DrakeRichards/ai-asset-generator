@@ -32,6 +32,12 @@ pub struct Cli {
     /// The image provider to use when generating the asset.
     #[arg(short, long)]
     pub image_provider: Option<ImageProviders>,
+    /// Output the filled markdown template to stdout instead of saving to a file.
+    #[arg(short, long, action)]
+    pub what_if: bool,
+    /// Return the JSON schema for the asset instead of the filled Markdown template.
+    #[arg(short, long, action)]
+    pub json: bool,
 }
 
 /// Generate an asset and save it to a file.
@@ -40,20 +46,25 @@ pub async fn generate_asset(
     prompt: Option<String>,
     output_directory: Option<String>,
     image_provider: Option<ImageProviders>,
+    what_if: bool,
+    as_json: bool,
 ) -> Result<String> {
     // Convert the output directory to a PathBuf. If no output directory is specified, use the current directory.
     let output_directory: PathBuf =
         Path::new(&output_directory.unwrap_or_else(|| ".".to_string())).to_path_buf();
-    // Set the image provider to OpenAI if no image provider is specified.
-    let image_provider: ImageProviders = image_provider.unwrap_or(ImageProviders::OpenAi);
     // Generate the asset and return the Markdown.
     let asset = asset_type
-        .generate_asset_markdown(prompt, &output_directory, image_provider)
+        .generate_asset_markdown(prompt, &output_directory, image_provider, as_json)
         .await;
-    // Save the asset to a file.
+    // If the what-if flag is set, print the asset to stdout, then return.
+    // Otherwise, save the asset to a file.
     match asset {
         Ok(asset) => {
-            save_asset_to_file(&asset, output_directory)?;
+            if what_if {
+                println!("{}", asset);
+            } else {
+                save_asset_to_file(&asset, output_directory)?;
+            }
             Ok(asset)
         }
         Err(e) => Err(e),

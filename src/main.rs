@@ -35,6 +35,8 @@ async fn main() -> Result<()> {
         cli.prompt,
         cli.output_directory,
         cli.image_provider,
+        cli.what_if,
+        cli.json,
     )
     .await?;
 

@@ -20,6 +20,7 @@
                 }
             },
             "args": [
+                "--what-if",
                 "character"
             ],
             "cwd": "${workspaceFolder}",

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use base64::Engine;
 use serde_json::Value;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[derive(Debug, serde::Serialize)]
 pub enum RequestBody {
@@ -52,7 +52,6 @@ pub async fn post_txt2img(base_url: &str, request_body: &RequestBody) -> Result<
     let body = match request_body {
         RequestBody::Txt2Img(txt2img) => serde_json::to_string(txt2img)?,
     };
-    dbg!(&body);
     let client = reqwest::Client::new();
     let response = client.post(url).body(body).send().await?;
     let response: Value = serde_json::from_str(&response.text().await?)?;
@@ -70,12 +69,15 @@ pub async fn post_txt2img(base_url: &str, request_body: &RequestBody) -> Result<
     Ok(images)
 }
 
-/// Convert a base64-encoded image to a PNG file.
-pub fn base64_to_png(image: &str, output_path: &Path) -> Result<PathBuf> {
+/// Convert a base64-encoded image to a PNG file which is saved to file_path.
+pub fn base64_to_png(image: &str, file_path: &Path) -> Result<()> {
+    // Check that file_path is not a directory.
+    if file_path.is_dir() {
+        return Err(anyhow::anyhow!("file_path must be a file path."));
+    }
     let image = base64::prelude::BASE64_STANDARD.decode(image)?;
-    let image_path = output_path.join("image.png");
-    std::fs::write(&image_path, image)?;
-    Ok(image_path)
+    std::fs::write(file_path, image)?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -125,9 +127,11 @@ mod tests {
     #[test]
     fn test_base64_to_png() {
         let image = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABjElEQVR42mNk".to_string();
-        let output_path = Path::new("test_output");
-        let image_path = base64_to_png(&image, output_path).unwrap();
-        assert_eq!(image_path, PathBuf::from("test_output/image.png"));
+        let output_directory = Path::new(".");
+        let output_path = output_directory.join("test_base64_to_png.png");
+        base64_to_png(&image, &output_path).unwrap();
+        assert!(output_path.exists());
+        std::fs::remove_file(output_path).unwrap();
     }
 
     #[tokio::test]
@@ -135,7 +139,7 @@ mod tests {
         // Set the URL for the local Stable Diffusion instance.
         std::env::set_var("STABLE_DIFFUSION_URL", "http://localhost:7860");
         let prompt = "A cat";
-        let output_path = Path::new("test_output");
+        let output_path = Path::new("./test_generate_image.png");
         let image_path = post_txt2img(
             "http://localhost:7860",
             &RequestBody::Txt2Img(Txt2Img {
@@ -150,8 +154,9 @@ mod tests {
             }),
         )
         .await?;
-        let image_path = base64_to_png(&image_path[0], output_path)?;
-        assert_eq!(image_path, PathBuf::from("test_output/image.png"));
+        base64_to_png(&image_path[0], output_path)?;
+        assert!(output_path.exists());
+        std::fs::remove_file(output_path)?;
         Ok(())
     }
 }

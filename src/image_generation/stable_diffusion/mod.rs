@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 pub struct StableDiffusionXLProvider;
 
 impl ImageProvider for StableDiffusionXLProvider {
-    async fn generate_image(prompt: &str, output_path: &Path) -> Result<PathBuf> {
+    async fn generate_image(prompt: &str, output_directory: &Path) -> Result<PathBuf> {
         // Check if the local Stable Diffusion instance is available.
         let base_url = std::env::var("STABLE_DIFFUSION_URL")?;
         let is_up: bool = requests::is_up(&base_url).await?;
@@ -54,10 +54,12 @@ impl ImageProvider for StableDiffusionXLProvider {
         // Send the request.
         let images: Vec<String> = requests::post_txt2img(&base_url, &request_body).await?;
 
+        // Build the output path for the image.
+        let timestamp = chrono::Utc::now().timestamp().to_string();
+        let output_path = output_directory.join(format!("{}.png", timestamp));
         // Convert the base64-encoded image to a PNG file.
-        let image = requests::base64_to_png(&images[0], output_path)?;
-
-        Ok(image)
+        requests::base64_to_png(&images[0], &output_path)?;
+        Ok(output_path)
     }
 }
 
@@ -71,11 +73,13 @@ mod tests {
         // Set the URL for the local Stable Diffusion instance.
         std::env::set_var("STABLE_DIFFUSION_URL", "http://localhost:7860");
         let prompt = "A cat";
-        let output_path = Path::new("test_output");
-        let image_path = StableDiffusionXLProvider::generate_image(prompt, output_path).await?;
-        assert_eq!(image_path, PathBuf::from("test_output/image.png"));
-        // Clean up the test output directory.
-        std::fs::remove_dir_all(output_path)?;
+        let output_directory = Path::new(".");
+        let image_path =
+            StableDiffusionXLProvider::generate_image(prompt, output_directory).await?;
+        // Check if the image was generated.
+        assert!(image_path.exists());
+        // Clean up the test output.
+        std::fs::remove_file(image_path)?;
         Ok(())
     }
 }

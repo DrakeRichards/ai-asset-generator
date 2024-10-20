@@ -41,6 +41,9 @@ pub struct Cli {
 }
 
 /// Generate an asset and save it to a file.
+/// If the what-if flag is set, print the asset to stdout instead of saving to a file.
+/// If the JSON flag is set, return the JSON schema for the asset instead of the filled Markdown template.
+/// Otherwise, returns the path to the saved file.
 pub async fn generate_asset(
     asset_type: AssetType,
     prompt: Option<String>,
@@ -61,20 +64,69 @@ pub async fn generate_asset(
     match asset {
         Ok(asset) => {
             if what_if {
-                println!("{}", asset);
+                Ok(asset)
             } else {
-                save_asset_to_file(&asset, output_directory)?;
+                let mut output_file = save_asset_to_file(&asset, output_directory)?
+                    .as_os_str()
+                    .to_string_lossy()
+                    .to_string();
+                // If output_file starts with "\\?\", remove it.
+                if output_file.starts_with(r#"\\?\"#) {
+                    output_file = output_file[4..].to_string();
+                }
+                Ok(output_file)
             }
-            Ok(asset)
         }
         Err(e) => Err(e),
     }
 }
 
-/// Save the asset to a file. The file name is the text of the first H1 heading in the asset. If no H1 heading is found, the file name is "asset.md".
-pub fn save_asset_to_file(asset: &str, output_directory: PathBuf) -> Result<(), std::io::Error> {
+/// Save the asset to a file. The file name is the text of the first H1 heading in the asset. If no H1 heading is found, the file name is "asset.md". Returns the path to the saved file.
+pub fn save_asset_to_file(asset: &str, output_directory: PathBuf) -> Result<PathBuf> {
     let file_name: String =
         crate::markdown::get_first_h1_heading(asset).unwrap_or_else(|| "asset".to_string());
     let file_path: PathBuf = Path::new(&output_directory).join(format!("{}.md", file_name));
-    std::fs::write(file_path, asset)
+    let _ = std::fs::write(&file_path, asset);
+    // Resolve the file path into an absolute path.
+    let file_path: PathBuf = file_path.canonicalize()?;
+    Ok(file_path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+
+    #[tokio::test]
+    async fn test_generate_asset() {
+        // Set the environment variable for the OpenAI API key.
+        env::set_var("OPENAI_API_KEY", "test");
+
+        let asset_type = AssetType::Character;
+        let prompt = Some("A character with a sword.".to_string());
+        let output_directory = Some(".".to_string());
+        let image_provider = Some(ImageProviders::OpenAi);
+        let what_if = false;
+        let as_json = false;
+
+        let asset = generate_asset(
+            asset_type,
+            prompt,
+            output_directory,
+            image_provider,
+            what_if,
+            as_json,
+        )
+        .await;
+        assert!(asset.is_ok());
+    }
+
+    #[test]
+    fn test_save_asset_to_file() -> Result<()> {
+        let asset = "# Title\n\nThis is the asset.";
+        let output_directory = PathBuf::from(".");
+        let file_path = save_asset_to_file(asset, output_directory)?;
+        assert!(file_path.exists());
+        Ok(())
+    }
 }

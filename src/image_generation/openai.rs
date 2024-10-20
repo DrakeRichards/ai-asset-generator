@@ -27,8 +27,13 @@ impl ImageProvider for OpenAiProvider {
         // Download and save the image to the current directory.
         let image: Vec<PathBuf> = response.save(&output_directory).await?;
 
+        // Rename the image file to the current timestamp.
+        let timestamp = chrono::Utc::now().timestamp().to_string();
+        let new_image = output_directory.join(format!("{}.png", timestamp));
+        std::fs::rename(&image[0], &new_image)?;
+
         // Return the path to the image.
-        let image: Option<PathBuf> = image.first().cloned();
+        let image: Option<PathBuf> = Some(new_image);
         match image {
             Some(image) => Ok(image),
             None => Err(anyhow::Error::new(OpenAIError::StreamError(

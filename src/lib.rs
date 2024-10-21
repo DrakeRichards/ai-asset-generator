@@ -21,11 +21,8 @@ use std::path::{Path, PathBuf};
 /// Generate an asset using OpenAI's API and save it to a markdown file.
 pub struct Cli {
     /// The type of asset to generate.
-    #[clap(subcommand)]
+    #[arg(short, long, value_enum)]
     pub asset_type: AssetType,
-    /// The initial prompt to use when generating the asset.
-    #[arg(short, long)]
-    pub prompt: Option<String>,
     /// The output directory for the generated asset.
     #[arg(short, long)]
     pub output_directory: Option<String>,
@@ -38,6 +35,8 @@ pub struct Cli {
     /// Return the JSON schema for the asset instead of the filled Markdown template.
     #[arg(short, long, action)]
     pub json: bool,
+    /// The initial prompt to use when generating the asset.
+    pub prompt: Option<String>,
 }
 
 /// Generate an asset and save it to a file.

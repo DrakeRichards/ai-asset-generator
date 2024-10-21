@@ -120,7 +120,13 @@ trait Asset {
 
         // Generate the initial prompt for the asset.
         let initial_prompt = match prompt {
-            Some(prompt) => prompt,
+            Some(prompt) => {
+                if prompt.is_empty() {
+                    Self::generate_initial_prompt()?
+                } else {
+                    prompt
+                }
+            }
             None => Self::generate_initial_prompt()?,
         };
 

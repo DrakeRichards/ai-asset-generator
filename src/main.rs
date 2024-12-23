@@ -19,10 +19,8 @@ async fn main() -> Result<()> {
 #[command(about)]
 struct AssetGenerator {
     /// Path to the configuration file
-    #[clap(short, long)]
     config_file: PathBuf,
 
     /// Optional prompt to generate the asset
-    #[clap(short, long)]
     prompt: Option<String>,
 }

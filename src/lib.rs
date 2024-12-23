@@ -75,11 +75,8 @@ impl Config {
             fs::create_dir_all(&output_dir)?;
         }
 
-        // Save the markdown to a file. The filename is the current timestamp
-        let markdown_file_path = output_dir.join(format!(
-            "{}.md",
-            chrono::Utc::now().format("%Y-%m-%d-%H-%M-%S")
-        ));
+        // Save the markdown to a file. The filename is the current unix timestamp
+        let markdown_file_path = output_dir.join(format!("{}.md", chrono::Utc::now().timestamp()));
         fs::write(&markdown_file_path, &markdown)?;
 
         // Return the markdown and the image path

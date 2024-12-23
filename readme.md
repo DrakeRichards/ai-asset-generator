@@ -59,6 +59,7 @@ model = "gpt-4o-2024-08-06"
 name = "OpenAi"
 
 [ai_images.provider.config]
+url = "http://localhost:7860"
 
 [ai_images.params]
 prompt = "A beautiful sunset over the ocean."
@@ -87,6 +88,7 @@ Parameters for generating a response to a structured input from an LLM provider 
 
 - `provider`: The provider to use for the generation. Currently, only `OpenAi` is supported.
 - `json_schema_file`: The path to the JSON schema file to use for the generation. See the [OpenAI Structered Outputs specification](https://platform.openai.com/docs/guides/structured-outputs) for more information.
+   - If you want to generate an image using the `ai_images` section, you need to include an `image_prompt` key in the JSON schema file.
 - `system_prompt`: The system prompt to use for the generation.
 - `initial_prompt`: The initial prompt to use for the generation. This is the default initial prompt that will be used if no initial prompt is provided by either the user or the `random_phrase_generator` section.
 
@@ -121,6 +123,7 @@ Parameters for generating an image using an AI model such as DALL-E or Stable Di
 Parameters for filling in a markdown template with the generated content.
 
 - `template_file_path`: The path to the markdown template file to fill in. The template file should contain placeholders that will be replaced with the generated content. Placeholders should be in the format `{{ key_name }}`.
+   - If you want to include an image in the markdown file, use the placeholder `{{ image_file_name }}`. Since this tool assumes you will be using wikilinks-style image links, it strips out all but the name and extension of the image file.
 
 ## Examples
 

@@ -9,10 +9,7 @@ use llm_structured_response::request::{Prompt, Schema};
 use minijinja::Environment;
 use random_phrase_generator::RandomphraseGenerator;
 use serde_json::{Map, Value};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::Path};
 
 impl Config {
     pub fn from_toml_file(config_file: &Path) -> Result<Self> {
@@ -34,7 +31,7 @@ impl Config {
         let image_prompt = llm_structured_response
             .get("image_prompt")
             .unwrap_or(&Value::Null);
-        let image_path: Option<PathBuf> = match image_prompt {
+        let image_path = match image_prompt {
             Value::String(prompt) => Some(self.generate_image(prompt).await?),
             _ => None,
         };
@@ -45,10 +42,8 @@ impl Config {
             .ok_or(Error::msg("Unable to convert response to an object."))?
             .clone();
         if let Some(image_path) = image_path {
-            llm_structured_response.insert(
-                "image_path".to_string(),
-                Value::String(image_path.to_string_lossy().to_string()),
-            );
+            llm_structured_response
+                .insert("image_file_name".to_string(), Value::String(image_path));
         }
 
         // Fill the markdown template with the image and the structured response
@@ -100,12 +95,18 @@ impl Config {
     }
 
     /// Generate an image based on the structured response
-    async fn generate_image(&self, prompt: &str) -> Result<PathBuf> {
+    async fn generate_image(&self, prompt: &str) -> Result<String> {
         let provider = self.ai_images.provider.to_image_provider()?;
         let mut params: ai_images::ImageParams = self.ai_images.params.clone();
         params.prompt = prompt.to_string();
         let image = provider.generate_image(params).await?;
-        Ok(image)
+        // Strip the image path to the filename
+        let image_filename = image
+            .file_name()
+            .ok_or(Error::msg("Unable to get the image filename."))?
+            .to_string_lossy()
+            .to_string();
+        Ok(image_filename)
     }
 
     /// Fill the markdown template with the image and the structured response

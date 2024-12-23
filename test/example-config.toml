@@ -1,0 +1,28 @@
+[random_phrase_generator]
+csv_files = ["test/animals.csv", "test/verbs.csv"]
+
+[llm_structured_response]
+provider = "OpenAi"
+json_schema_file = "test/example.schema.json"
+system_prompt = "You are a tester for my JSON schema file. You need to provide a JSON object that matches the schema."
+initial_prompt = "Provide a JSON object that matches the schema."
+
+[llm_structured_response.provider_config]
+model = "gpt-4o-2024-08-06"
+
+[ai_images.provider]
+name = "OpenAi"
+
+[ai_images.provider.config]
+
+[ai_images.params]
+prompt = "A beautiful sunset over the ocean."
+output_directory = "."
+width = 1024
+height = 1024
+steps = 15
+sampler_name = "UniPC"
+cfg_scale = 2
+
+[markdown_template_filler]
+template_file_path = "test/example-template.md"

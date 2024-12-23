@@ -43,6 +43,8 @@ Not yet implemented. I'll figure out how to do this later.
 This tool takes a TOML configuration file as an input and generates a random RPG asset based on the configuration. The generated asset is saved to a markdown file and an image file. Below is an example configuration file:
 
 ```toml
+output_directory = "."
+
 [random_phrase_generator]
 csv_files = ["test/animals.csv", "test/verbs.csv"]
 
@@ -75,6 +77,10 @@ template_file_path = "test/example-template.md"
 ```
 
 Each section is defined as follows:
+
+### Top-Level
+
+- `output_directory`: The directory to save the generated markdown file. Default is the current directory.
 
 ### `random_phrase_generator`
 

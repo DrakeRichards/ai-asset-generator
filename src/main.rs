@@ -8,8 +8,9 @@ use clap::Parser;
 async fn main() -> Result<()> {
     let args = AssetGenerator::parse();
     let config = Config::from_toml_file(&args.config_file)?;
-    let asset_markdown = config.generate_asset(args.prompt.as_deref()).await?;
-    println!("{}", asset_markdown);
+    let asset = config.generate_asset(args.prompt.as_deref()).await?;
+    // Print the paths to the generated asset as a JSON string
+    println!("{}", serde_json::to_string(&asset)?);
     Ok(())
 }
 

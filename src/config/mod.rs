@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Default, Serialize)]
 pub struct Config {
+    pub output_directory: PathBuf,
     pub random_phrase_generator: RandomPhraseGeneratorConfig,
     pub llm_structured_response: LlmStructuredResponseConfig,
     pub ai_images: AiImagesConfig,

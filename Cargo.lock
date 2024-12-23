@@ -19,10 +19,11 @@ checksum = "512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627"
 
 [[package]]
 name = "ai-asset-generator"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ai-images",
  "anyhow",
+ "chrono",
  "clap",
  "llm-structured-response",
  "minijinja",

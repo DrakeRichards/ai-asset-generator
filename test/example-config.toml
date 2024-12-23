@@ -1,3 +1,5 @@
+output_directory = "test/output"
+
 [random_phrase_generator]
 csv_files = ["test/animals.csv", "test/verbs.csv"]
 

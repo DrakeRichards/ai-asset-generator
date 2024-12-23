@@ -1,11 +1,12 @@
 [package]
 name = "ai-asset-generator"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 
 [dependencies]
 ai-images = { git = "ssh://github.com/DrakeRichards/ai-images.git", version = "0.1.1" }
 anyhow = "1.0.95"
+chrono = "0.4.39"
 clap = { version = "4.5.23", features = ["derive"] }
 llm-structured-response = { git = "ssh://github.com/DrakeRichards/llm-structured-response.git", version = "0.1.2" }
 minijinja = { version = "2.5.0", features = ["serde_json"] }

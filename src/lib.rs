@@ -8,8 +8,12 @@ pub use config::Config;
 use llm_structured_response::request::{Prompt, Schema};
 use minijinja::Environment;
 use random_phrase_generator::RandomphraseGenerator;
+use serde::Serialize;
 use serde_json::{Map, Value};
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 impl Config {
     pub fn from_toml_file(config_file: &Path) -> Result<Self> {
@@ -18,7 +22,7 @@ impl Config {
         Ok(config)
     }
 
-    pub async fn generate_asset(&self, user_prompt: Option<&str>) -> Result<String> {
+    pub async fn generate_asset(&self, user_prompt: Option<&str>) -> Result<Asset> {
         let initial_prompt = match user_prompt {
             Some(prompt) => prompt.to_string(),
             None => self.generate_random_phrase()?,
@@ -27,7 +31,7 @@ impl Config {
         let llm_structured_response = self.generate_structured_response(&initial_prompt).await?;
         let llm_structured_response: Value = serde_json::from_str(&llm_structured_response)?;
 
-        // Generate an image based on the structured response
+        // Generate an image based on the structured response and save it
         let image_prompt = llm_structured_response
             .get("image_prompt")
             .unwrap_or(&Value::Null);
@@ -35,22 +39,54 @@ impl Config {
             Value::String(prompt) => Some(self.generate_image(prompt).await?),
             _ => None,
         };
-
-        // Add the image path to the structured response
+        // Strip the image path to the filename
+        let image_filename: Option<String> = match &image_path {
+            Some(image_path) => image_path
+                .file_name()
+                .ok_or(Error::msg("Unable to get the image filename."))?
+                .to_string_lossy()
+                .to_string()
+                .parse()
+                .ok(),
+            None => None,
+        };
+        // Add the image name to the structured response
         let mut llm_structured_response = llm_structured_response
             .as_object()
             .ok_or(Error::msg("Unable to convert response to an object."))?
             .clone();
-        if let Some(image_path) = image_path {
+        if let Some(image_filename) = image_filename {
             llm_structured_response
-                .insert("image_file_name".to_string(), Value::String(image_path));
+                .insert("image_file_name".to_string(), Value::String(image_filename));
         }
 
         // Fill the markdown template with the image and the structured response
         let markdown = self.fill_template(llm_structured_response)?;
 
-        // Return the markdown
-        Ok(markdown)
+        // If output_dir is empty, save the markdown to the current directory
+        let output_dir = if self.output_directory == PathBuf::new() {
+            PathBuf::from(".")
+        } else {
+            self.output_directory.clone()
+        };
+
+        // Create the output directory if it does not exist
+        if !output_dir.exists() {
+            fs::create_dir_all(&output_dir)?;
+        }
+
+        // Save the markdown to a file. The filename is the current timestamp
+        let markdown_file_path = output_dir.join(format!(
+            "{}.md",
+            chrono::Utc::now().format("%Y-%m-%d-%H-%M-%S")
+        ));
+        fs::write(&markdown_file_path, &markdown)?;
+
+        // Return the markdown and the image path
+        Ok(Asset {
+            markdown: markdown_file_path,
+            image: image_path,
+        })
     }
 
     /// Generate the initial prompt if not provided by the user
@@ -95,18 +131,12 @@ impl Config {
     }
 
     /// Generate an image based on the structured response
-    async fn generate_image(&self, prompt: &str) -> Result<String> {
+    async fn generate_image(&self, prompt: &str) -> Result<PathBuf> {
         let provider = self.ai_images.provider.to_image_provider()?;
         let mut params: ai_images::ImageParams = self.ai_images.params.clone();
         params.prompt = prompt.to_string();
         let image = provider.generate_image(params).await?;
-        // Strip the image path to the filename
-        let image_filename = image
-            .file_name()
-            .ok_or(Error::msg("Unable to get the image filename."))?
-            .to_string_lossy()
-            .to_string();
-        Ok(image_filename)
+        Ok(image)
     }
 
     /// Fill the markdown template with the image and the structured response
@@ -118,4 +148,11 @@ impl Config {
         let rendered = templ.render(&structured_response)?;
         Ok(rendered)
     }
+}
+
+/// The asset to be generated
+#[derive(Debug, Serialize)]
+pub struct Asset {
+    pub markdown: PathBuf,
+    pub image: Option<PathBuf>,
 }

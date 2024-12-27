@@ -18,13 +18,18 @@ name = "OpenAi"
 [ai_images.provider.config]
 
 [ai_images.params]
-prompt = "A beautiful sunset over the ocean."
 output_directory = "."
 width = 1024
 height = 1024
 steps = 15
 sampler_name = "UniPC"
 cfg_scale = 2
+
+[ai_images.params.prompt]
+base = "A beautiful sunset over the ocean."
+prefix = ""
+suffix = ""
+negative = ""
 
 [markdown_template_filler]
 template_file_path = "test/example-template.md"

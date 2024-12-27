@@ -64,13 +64,18 @@ name = "OpenAi"
 url = "http://localhost:7860"
 
 [ai_images.params]
-prompt = "A beautiful sunset over the ocean."
 output_directory = "."
 width = 1024
 height = 1024
 steps = 15
 sampler_name = "UniPC"
 cfg_scale = 2
+
+[ai_images.params.prompt]
+base = "A beautiful sunset over the ocean."
+prefix = ""
+suffix = ""
+negative = ""
 
 [markdown_template_filler]
 template_file_path = "test/example-template.md"
@@ -116,13 +121,19 @@ Parameters for generating an image using an AI model such as DALL-E or Stable Di
 
 #### `ai_images.params`
 
-- `prompt`: The prompt to use for the generation. This is the default prompt that will be used if no image prompt is returned from the `llm_structured_response` section.
 - `output_directory`: The directory to save the generated image. Default is the current directory.
 - `width`: The width of the generated image. Default is `1024`.
 - `height`: The height of the generated image. Default is `1024`.
 - `steps`: The number of steps to use in the generation. Default is `15`. Only used by Stable Diffusion.
 - `sampler_name`: The name of the sampler to use in the generation. Default is `UniPC`. Only used by Stable Diffusion.
 - `cfg_scale`: The scale of the configuration. Default is `2`. Only used by Stable Diffusion.
+
+##### `ai_images.params.prompt`
+
+- `base`: The base prompt to use for the generation.
+- `prefix`: The prefix to insert before the base prompt. Useful if you want to force a certain style or theme.
+- `suffix`: The suffix to insert after the base prompt. Useful to initialize LORAs.
+- `negative`: The negative prompt to use for the generation.
 
 ### `markdown_template_filler`
 

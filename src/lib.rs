@@ -128,11 +128,22 @@ impl Config {
     }
 
     /// Generate an image based on the structured response
-    async fn generate_image(&self, prompt: &str) -> Result<PathBuf> {
+    async fn generate_image(&self, prompt_from_response: &str) -> Result<PathBuf> {
+        // Initialize the provider.
         let provider = self.ai_images.provider.to_image_provider()?;
-        let mut params: ai_images::ImageParams = self.ai_images.params.clone();
-        params.prompt = prompt.to_string();
-        let image = provider.generate_image(params).await?;
+        // Set up the prompt.
+        let image_prompt: ai_images::Prompt = ai_images::Prompt {
+            base: prompt_from_response.to_string(),
+            prefix: self.ai_images.params.prompt.prefix.clone(),
+            suffix: self.ai_images.params.prompt.suffix.clone(),
+            negative: self.ai_images.params.prompt.negative.clone(),
+        };
+        // Merge the new image prompt into the existing image params.
+        // We need to do this since the configuration TOML file can define prefixes, suffixes, etc. which cannot be passed from the command line, and which are not part of the structured response.
+        let mut image_params: ai_images::ImageParams = self.ai_images.params.clone();
+        image_params.prompt = image_prompt;
+        // Generate the image.
+        let image = provider.generate_image(image_params).await?;
         Ok(image)
     }
 

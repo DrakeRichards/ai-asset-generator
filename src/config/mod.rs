@@ -1,5 +1,4 @@
-use ai_images::cli::GenerationParameters;
-use llm_structured_response::cli::ConfigArgs;
+use super::{ai_images::cli::GenerationParameters, llm_structured_response::cli::ConfigArgs};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

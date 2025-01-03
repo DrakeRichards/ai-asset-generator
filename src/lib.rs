@@ -1,7 +1,10 @@
 #![warn(clippy::unwrap_used)]
 #![warn(clippy::expect_used)]
 
+mod ai_images;
 mod config;
+mod llm_structured_response;
+mod random_phrase_generator;
 
 use anyhow::{Error, Result};
 pub use config::Config;

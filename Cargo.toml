@@ -1,10 +1,10 @@
 [package]
 name = "ai-asset-generator"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 
 [dependencies]
-ai-images = { git = "ssh://github.com/DrakeRichards/ai-images.git", version = "0.2.1" }
+ai-images = { git = "ssh://github.com/DrakeRichards/ai-images.git", version = "0.3.0" }
 anyhow = "1.0.95"
 chrono = "0.4.39"
 clap = { version = "4.5.23", features = ["derive"] }

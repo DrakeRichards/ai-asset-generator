@@ -19,7 +19,7 @@ checksum = "512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627"
 
 [[package]]
 name = "ai-asset-generator"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "ai-images",
  "anyhow",
@@ -36,8 +36,8 @@ dependencies = [
 
 [[package]]
 name = "ai-images"
-version = "0.2.1"
-source = "git+ssh://github.com/DrakeRichards/ai-images.git#8db6e8ca6fa9334db9ef63b50f49d4e8c864070c"
+version = "0.3.0"
+source = "git+ssh://github.com/DrakeRichards/ai-images.git#fc6bdba89eab9d4d50c03fc50edf0578239d6169"
 dependencies = [
  "anyhow",
  "async-openai",

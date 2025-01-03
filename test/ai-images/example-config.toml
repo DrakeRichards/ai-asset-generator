@@ -1,0 +1,19 @@
+[provider]
+name = "StableDiffusion"
+
+[provider.config]
+url = "http://localhost:7860/"
+
+[params]
+output_directory = "."
+width = 1024
+height = 1024
+steps = 15
+sampler_name = "UniPC"
+cfg_scale = 2
+
+[params.prompt]
+base = "A beautiful sunset over the ocean."
+prefix = ""
+suffix = ""
+negative = ""

@@ -59,14 +59,14 @@ mod tests {
     fn config_to_toml() -> Result<()> {
         let config_args = GenerationParameters::default();
         let toml_string = toml::to_string(&config_args)?;
-        let toml_file = PathBuf::from("test/default-config.toml");
+        let toml_file = PathBuf::from("test/ai-images/default-config.toml");
         fs::write(&toml_file, toml_string)?;
         Ok(())
     }
 
     #[test]
     fn test_read_from_toml_file() -> Result<()> {
-        let toml_file = PathBuf::from("test/example-config.toml");
+        let toml_file = PathBuf::from("test/ai-images/example-config.toml");
         let config_args = {
             let toml_content = fs::read_to_string(&toml_file)?;
             from_str::<GenerationParameters>(&toml_content)?

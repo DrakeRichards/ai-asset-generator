@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::WeightedItemList;
+use super::weighted_items::WeightedItemList;
 use anyhow::Result;
 use std::path::Path;
 

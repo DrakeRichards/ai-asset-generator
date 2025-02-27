@@ -1,22 +1,41 @@
 #![warn(clippy::unwrap_used)]
 #![warn(clippy::expect_used)]
 
-mod ai_images;
-mod config;
-mod llm_structured_response;
-mod random_phrase_generator;
-
+use ai_images::cli::GenerationParameters;
 use anyhow::{Error, Result};
-pub use config::Config;
+use llm_structured_response::cli::ConfigArgs;
 use llm_structured_response::request::{Prompt, Schema};
 use minijinja::Environment;
 use random_phrase_generator::RandomphraseGenerator;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::{
     fs,
     path::{Path, PathBuf},
 };
+
+#[derive(Debug, Deserialize, Default, Serialize)]
+pub struct Config {
+    pub output_directory: PathBuf,
+    pub random_phrase_generator: RandomPhraseGeneratorConfig,
+    pub llm_structured_response: LlmStructuredResponseConfig,
+    pub ai_images: AiImagesConfig,
+    pub markdown_template_filler: MarkdownTemplateFillerConfig,
+}
+
+type LlmStructuredResponseConfig = ConfigArgs;
+
+#[derive(Debug, Deserialize, Default, Serialize)]
+pub struct RandomPhraseGeneratorConfig {
+    pub csv_files: Vec<PathBuf>,
+}
+
+type AiImagesConfig = GenerationParameters;
+
+#[derive(Debug, Deserialize, Default, Serialize)]
+pub struct MarkdownTemplateFillerConfig {
+    pub template_file_path: PathBuf,
+}
 
 impl Config {
     pub fn from_toml_file(config_file: &Path) -> Result<Self> {
@@ -166,4 +185,27 @@ impl Config {
 pub struct Asset {
     pub markdown: PathBuf,
     pub image: Option<PathBuf>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+
+    #[test]
+    fn test_deserialize_config_file() -> Result<()> {
+        let config_file_path = PathBuf::from("test/example-config.toml");
+        let config = std::fs::read_to_string(config_file_path)?;
+        let config: Config = toml::from_str(&config)?;
+        println!("{:?}", config);
+        Ok(())
+    }
+
+    #[test]
+    fn test_serialize_default_config() -> Result<()> {
+        let config = Config::default();
+        let config = toml::to_string(&config)?;
+        println!("{}", config);
+        Ok(())
+    }
 }

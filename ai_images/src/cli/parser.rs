@@ -1,5 +1,5 @@
 use super::provider::Provider;
-use crate::ai_images::ImageParams;
+use crate::ImageParams;
 use clap::{Args, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

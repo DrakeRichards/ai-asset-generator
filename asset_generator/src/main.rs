@@ -1,8 +1,9 @@
-use std::path::PathBuf;
+mod config;
 
-use ai_asset_generator::Config;
 use anyhow::Result;
 use clap::Parser;
+use config::Config;
+use std::path::PathBuf;
 
 #[tokio::main]
 async fn main() -> Result<()> {

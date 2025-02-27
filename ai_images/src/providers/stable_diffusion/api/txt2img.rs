@@ -1,4 +1,4 @@
-use crate::ai_images::images::Base64Image;
+use crate::images::Base64Image;
 
 use super::StableDiffusionXLProvider;
 use anyhow::Result;

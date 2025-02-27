@@ -54,7 +54,7 @@ impl WeightedItemList {
         // One header must be "value" and the other must be "weight"
         if let Some(header) = headers
             .iter()
-            .find(|header| header.to_lowercase() != "value" && header.to_lowercase() != "weight")
+            .find(|header| *header != "value" && *header != "weight")
         {
             return Err(Error::msg(format!(
                 "The CSV string has an invalid header: {}.",

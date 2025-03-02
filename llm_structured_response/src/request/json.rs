@@ -1,3 +1,5 @@
+//! JSON utilities for working with OpenAI's API.
+
 use serde::de::Error;
 use serde_json::{Result, Value};
 

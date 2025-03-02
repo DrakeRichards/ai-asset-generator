@@ -2,14 +2,14 @@ mod config;
 
 use anyhow::Result;
 use clap::Parser;
-use config::Config;
+use config::Asset;
 use std::path::PathBuf;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let args = AssetGenerator::parse();
-    let config = Config::from_toml_file(&args.config_file)?;
-    let asset = config.generate_asset(args.prompt.as_deref()).await?;
+    let args = AssetCli::parse();
+    let asset =
+        Asset::from_config_file_and_prompt(&args.config_file, args.prompt.as_deref()).await?;
     // Print the paths to the generated asset as a JSON string
     println!("{}", serde_json::to_string(&asset)?);
     Ok(())
@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
 /// Generate an asset based on the configuration file
 #[derive(Parser)]
 #[command(about)]
-struct AssetGenerator {
+struct AssetCli {
     /// Path to the configuration file
     config_file: PathBuf,
 

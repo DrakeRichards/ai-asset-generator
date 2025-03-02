@@ -15,7 +15,7 @@ use std::{
 };
 
 #[derive(Debug, Deserialize, Default, Serialize)]
-pub struct Config {
+pub struct AssetConfig {
     pub output_directory: PathBuf,
     pub random_phrase_generator: RandomPhraseGeneratorConfig,
     pub llm_structured_response: LlmStructuredResponseConfig,
@@ -37,75 +37,11 @@ pub struct MarkdownTemplateFillerConfig {
     pub template_file_path: PathBuf,
 }
 
-impl Config {
+impl AssetConfig {
     pub fn from_toml_file(config_file: &Path) -> Result<Self> {
         let config = fs::read_to_string(config_file)?;
-        let config: Config = toml::from_str(&config)?;
+        let config: AssetConfig = toml::from_str(&config)?;
         Ok(config)
-    }
-
-    pub async fn generate_asset(&self, user_prompt: Option<&str>) -> Result<Asset> {
-        let initial_prompt = match user_prompt {
-            Some(prompt) => prompt.to_string(),
-            None => self.generate_random_phrase()?,
-        };
-
-        let llm_structured_response = self.generate_structured_response(&initial_prompt).await?;
-        let llm_structured_response: Value = serde_json::from_str(&llm_structured_response)?;
-
-        // Generate an image based on the structured response and save it
-        let image_prompt = llm_structured_response
-            .get("image_prompt")
-            .unwrap_or(&Value::Null);
-        let image_path = match image_prompt {
-            Value::String(prompt) => Some(self.generate_image(prompt).await?),
-            _ => None,
-        };
-        // Strip the image path to the filename
-        let image_filename: Option<String> = match &image_path {
-            Some(image_path) => image_path
-                .file_name()
-                .ok_or(Error::msg("Unable to get the image filename."))?
-                .to_string_lossy()
-                .to_string()
-                .parse()
-                .ok(),
-            None => None,
-        };
-        // Add the image name to the structured response
-        let mut llm_structured_response = llm_structured_response
-            .as_object()
-            .ok_or(Error::msg("Unable to convert response to an object."))?
-            .clone();
-        if let Some(image_filename) = image_filename {
-            llm_structured_response
-                .insert("image_file_name".to_string(), Value::String(image_filename));
-        }
-
-        // Fill the markdown template with the image and the structured response
-        let markdown = self.fill_template(llm_structured_response)?;
-
-        // If output_dir is empty, save the markdown to the current directory
-        let output_dir = if self.output_directory == PathBuf::new() {
-            PathBuf::from(".")
-        } else {
-            self.output_directory.clone()
-        };
-
-        // Create the output directory if it does not exist
-        if !output_dir.exists() {
-            fs::create_dir_all(&output_dir)?;
-        }
-
-        // Save the markdown to a file. The filename is the current unix timestamp
-        let markdown_file_path = output_dir.join(format!("{}.md", chrono::Utc::now().timestamp()));
-        fs::write(&markdown_file_path, &markdown)?;
-
-        // Return the markdown and the image path
-        Ok(Asset {
-            markdown: markdown_file_path,
-            image: image_path,
-        })
     }
 
     /// Generate the initial prompt if not provided by the user
@@ -187,6 +123,81 @@ pub struct Asset {
     pub image: Option<PathBuf>,
 }
 
+impl Asset {
+    pub async fn from_config_file_and_prompt(
+        config_file: &Path,
+        prompt: Option<&str>,
+    ) -> Result<Asset> {
+        let config = AssetConfig::from_toml_file(config_file)?;
+        let asset = Asset::from_config(&config, prompt).await?;
+        Ok(asset)
+    }
+
+    async fn from_config(config: &AssetConfig, user_prompt: Option<&str>) -> Result<Asset> {
+        let initial_prompt = match user_prompt {
+            Some(prompt) => prompt.to_string(),
+            None => config.generate_random_phrase()?,
+        };
+
+        let llm_structured_response = config.generate_structured_response(&initial_prompt).await?;
+        let llm_structured_response: Value = serde_json::from_str(&llm_structured_response)?;
+
+        // Generate an image based on the structured response and save it
+        let image_prompt = llm_structured_response
+            .get("image_prompt")
+            .unwrap_or(&Value::Null);
+        let image_path = match image_prompt {
+            Value::String(prompt) => Some(config.generate_image(prompt).await?),
+            _ => None,
+        };
+        // Strip the image path to the filename
+        let image_filename: Option<String> = match &image_path {
+            Some(image_path) => image_path
+                .file_name()
+                .ok_or(Error::msg("Unable to get the image filename."))?
+                .to_string_lossy()
+                .to_string()
+                .parse()
+                .ok(),
+            None => None,
+        };
+        // Add the image name to the structured response
+        let mut llm_structured_response = llm_structured_response
+            .as_object()
+            .ok_or(Error::msg("Unable to convert response to an object."))?
+            .clone();
+        if let Some(image_filename) = image_filename {
+            llm_structured_response
+                .insert("image_file_name".to_string(), Value::String(image_filename));
+        }
+
+        // Fill the markdown template with the image and the structured response
+        let markdown = config.fill_template(llm_structured_response)?;
+
+        // If output_dir is empty, save the markdown to the current directory
+        let output_dir = if config.output_directory == PathBuf::new() {
+            PathBuf::from(".")
+        } else {
+            config.output_directory.clone()
+        };
+
+        // Create the output directory if it does not exist
+        if !output_dir.exists() {
+            fs::create_dir_all(&output_dir)?;
+        }
+
+        // Save the markdown to a file. The filename is the current unix timestamp
+        let markdown_file_path = output_dir.join(format!("{}.md", chrono::Utc::now().timestamp()));
+        fs::write(&markdown_file_path, &markdown)?;
+
+        // Return the markdown and the image path
+        Ok(Asset {
+            markdown: markdown_file_path,
+            image: image_path,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,14 +207,14 @@ mod tests {
     fn test_deserialize_config_file() -> Result<()> {
         let config_file_path = PathBuf::from("test/example-config.toml");
         let config = std::fs::read_to_string(config_file_path)?;
-        let config: Config = toml::from_str(&config)?;
+        let config: AssetConfig = toml::from_str(&config)?;
         println!("{:?}", config);
         Ok(())
     }
 
     #[test]
     fn test_serialize_default_config() -> Result<()> {
-        let config = Config::default();
+        let config = AssetConfig::default();
         let config = toml::to_string(&config)?;
         println!("{}", config);
         Ok(())

@@ -20,8 +20,8 @@ pub struct OpenAiProvider {
 impl LlmProvider for OpenAiProvider {
     async fn request_structured_response(
         &self,
-        schema: request::Schema,
-        prompt: request::Prompt,
+        schema: &request::Schema,
+        prompt: &request::Prompt,
     ) -> Result<String> {
         // Load environment variables from a .env file.
         dotenv().ok();
@@ -36,9 +36,9 @@ impl LlmProvider for OpenAiProvider {
         // Set the response format to JSON schema.
         let response_format = ResponseFormat::JsonSchema {
             json_schema: ResponseFormatJsonSchema {
-                description: schema.description,
-                name: schema.name,
-                schema: Some(schema.schema),
+                description: schema.description.clone(),
+                name: schema.name.clone(),
+                schema: Some(schema.json.clone()),
                 strict: Some(true),
             },
         };
@@ -47,8 +47,8 @@ impl LlmProvider for OpenAiProvider {
         let request = CreateChatCompletionRequestArgs::default()
             .model(&self.config.model)
             .messages([
-                ChatCompletionRequestSystemMessage::from(prompt.system).into(),
-                ChatCompletionRequestUserMessage::from(prompt.initial).into(),
+                ChatCompletionRequestSystemMessage::from(prompt.system.clone()).into(),
+                ChatCompletionRequestUserMessage::from(prompt.initial.clone()).into(),
             ])
             .response_format(response_format)
             .build()?;
@@ -110,7 +110,9 @@ mod tests {
             system: "Please provide your name.".to_string(),
             initial: "My name is Alice.".to_string(),
         };
-        let response = provider.request_structured_response(schema, prompt).await?;
+        let response = provider
+            .request_structured_response(&schema, &prompt)
+            .await?;
         // Check if the response is valid JSON.
         let _: serde_json::Value = serde_json::from_str(&response)?;
         Ok(())

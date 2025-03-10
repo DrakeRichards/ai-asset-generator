@@ -2,7 +2,7 @@
 
 use super::weighted_items::WeightedItemList;
 use anyhow::Result;
-use std::path::Path;
+use std::path::PathBuf;
 
 /// A combination of several related weighted item lists. Used to generate random phrases.
 /// Generally should be created from CSV files or strings using the `from_csv_files` or `from_csv_strings` methods.
@@ -14,7 +14,7 @@ pub struct RandomphraseGenerator {
 
 impl RandomphraseGenerator {
     /// Create a new RandomphraseGenerator from a list of CSV files.
-    pub fn from_csv_files(csv_files: Vec<&Path>) -> Result<RandomphraseGenerator> {
+    pub fn from_csv_files(csv_files: &Vec<PathBuf>) -> Result<RandomphraseGenerator> {
         let mut weighted_item_lists = Vec::new();
         for csv_file in csv_files {
             let csv = std::fs::read_to_string(csv_file)?;
@@ -49,11 +49,43 @@ impl RandomphraseGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{
+        fs::File,
+        io::Write,
+        path::{Path, PathBuf},
+    };
 
     #[test]
     fn test_from_csv_files() -> Result<()> {
-        let csv_files = vec![Path::new("test/cities.csv"), Path::new("test/colors.csv")];
-        let phrase_generator = RandomphraseGenerator::from_csv_files(csv_files)?;
+        /// Generate CSV files for testing.
+        fn generate_test_csv_files() -> Result<Vec<PathBuf>> {
+            struct CsvFile {
+                text: &'static str,
+                path: PathBuf,
+            }
+
+            let csv_files = vec![
+                CsvFile {
+                    text: "value,weight\nred,1\nblue,1\nyellow,1",
+                    path: Path::new("colors.csv").to_path_buf(),
+                },
+                CsvFile {
+                    text: "value,weight\nNew York,1\nLos Angeles,1\nChicago,1",
+                    path: Path::new("cities.csv").to_path_buf(),
+                },
+            ];
+
+            let mut paths = Vec::new();
+            for csv_file in csv_files {
+                let mut file = File::create(&csv_file.path)?;
+                file.write_all(csv_file.text.as_bytes())?;
+                paths.push(csv_file.path);
+            }
+            Ok(paths)
+        }
+
+        let csv_files = generate_test_csv_files()?;
+        let phrase_generator = RandomphraseGenerator::from_csv_files(&csv_files)?;
         // The phrase generator should have two weighted item lists.
         assert_eq!(phrase_generator.weighted_item_lists.len(), 2);
         let random_phrase = phrase_generator.generate_random_phrase();
@@ -61,6 +93,10 @@ mod tests {
         assert!(random_phrase.contains(" "));
         // The phrase should have at least two characters.
         assert!(random_phrase.len() >= 2);
+        // Clean up the CSV files.
+        for csv_file in csv_files {
+            std::fs::remove_file(csv_file)?;
+        }
         Ok(())
     }
 

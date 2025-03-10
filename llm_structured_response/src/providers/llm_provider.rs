@@ -7,7 +7,7 @@ use async_trait::async_trait;
 pub trait LlmProvider {
     async fn request_structured_response(
         &self,
-        schema: request::Schema,
-        prompt: request::Prompt,
+        schema: &request::Schema,
+        prompt: &request::Prompt,
     ) -> Result<String>;
 }

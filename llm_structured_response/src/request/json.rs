@@ -181,7 +181,8 @@ mod tests {
         let expected = r#"{"title": "Character", "description": "A character in an RPG.", "properties": {"name": {"type": "string"}, "stats": {"type": "object", "properties": {"strength": {"type": "number"}}}}}"#;
         let expected: Value = serde_json::from_str(expected)?;
         let result = remove_defaults(schema)?;
-        Ok(assert_eq!(result, expected))
+        assert_eq!(result, expected);
+        Ok(())
     }
 
     #[test]
@@ -191,7 +192,8 @@ mod tests {
         let expected = r#"{"title":"Character","description":"A character in an RPG.","additionalProperties":false}"#;
         let expected: Value = serde_json::from_str(expected)?;
         let result = add_additional_properties(schema)?;
-        Ok(assert_eq!(result, expected))
+        assert_eq!(result, expected);
+        Ok(())
     }
 
     #[test]
@@ -201,7 +203,8 @@ mod tests {
         let expected = r#"{"title":"Character","description":"A character in an RPG.","properties":{"name":{"type":"string"}},"required":["name"]}"#;
         let expected: Value = serde_json::from_str(expected)?;
         let result = add_required_properties(schema)?;
-        Ok(assert_eq!(result, expected))
+        assert_eq!(result, expected);
+        Ok(())
     }
 
     #[test]
@@ -212,6 +215,7 @@ mod tests {
         let expected: Value = serde_json::from_str(expected)?;
 
         let result = clean_schema(schema)?;
-        Ok(assert_eq!(expected, result))
+        assert_eq!(expected, result);
+        Ok(())
     }
 }

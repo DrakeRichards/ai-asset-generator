@@ -46,14 +46,8 @@ impl AssetConfig {
 
     /// Generate the initial prompt if not provided by the user
     fn generate_random_phrase(&self) -> Result<String> {
-        let csv_files: Vec<&Path> = self
-            .random_phrase_generator
-            .csv_files
-            .iter()
-            .map(|path| path.as_path())
-            .collect();
         let random_phrase_generator: RandomphraseGenerator =
-            RandomphraseGenerator::from_csv_files(csv_files)?;
+            RandomphraseGenerator::from_csv_files(&self.random_phrase_generator.csv_files)?;
         let random_phrase = random_phrase_generator.generate_random_phrase();
         Ok(random_phrase)
     }
@@ -77,8 +71,8 @@ impl AssetConfig {
             .provider
             .request_structured_response(
                 self.llm_structured_response.provider_config.clone(),
-                schema,
-                prompt,
+                &schema,
+                &prompt,
             )
             .await?;
 
@@ -136,17 +130,17 @@ impl Asset {
     async fn from_config(config: &AssetConfig, user_prompt: Option<&str>) -> Result<Asset> {
         let initial_prompt = match user_prompt {
             Some(prompt) => prompt.to_string(),
-            None => config.generate_random_phrase()?,
+            _ => config.generate_random_phrase()?,
         };
 
         let llm_structured_response = config.generate_structured_response(&initial_prompt).await?;
         let llm_structured_response: Value = serde_json::from_str(&llm_structured_response)?;
 
         // Generate an image based on the structured response and save it
-        let image_prompt = llm_structured_response
+        let image_prompt: &Value = llm_structured_response
             .get("image_prompt")
             .unwrap_or(&Value::Null);
-        let image_path = match image_prompt {
+        let image_path: Option<PathBuf> = match image_prompt {
             Value::String(prompt) => Some(config.generate_image(prompt).await?),
             _ => None,
         };
@@ -159,10 +153,10 @@ impl Asset {
                 .to_string()
                 .parse()
                 .ok(),
-            None => None,
+            _ => None,
         };
         // Add the image name to the structured response
-        let mut llm_structured_response = llm_structured_response
+        let mut llm_structured_response: Map<String, Value> = llm_structured_response
             .as_object()
             .ok_or(Error::msg("Unable to convert response to an object."))?
             .clone();
@@ -172,10 +166,10 @@ impl Asset {
         }
 
         // Fill the markdown template with the image and the structured response
-        let markdown = config.fill_template(llm_structured_response)?;
+        let markdown: String = config.fill_template(llm_structured_response)?;
 
         // If output_dir is empty, save the markdown to the current directory
-        let output_dir = if config.output_directory == PathBuf::new() {
+        let output_dir: PathBuf = if config.output_directory == PathBuf::new() {
             PathBuf::from(".")
         } else {
             config.output_directory.clone()
@@ -203,20 +197,109 @@ mod tests {
     use super::*;
     use anyhow::Result;
 
-    #[test]
-    fn test_deserialize_config_file() -> Result<()> {
-        let config_file_path = PathBuf::from("test/example-config.toml");
-        let config = std::fs::read_to_string(config_file_path)?;
-        let config: AssetConfig = toml::from_str(&config)?;
-        println!("{:?}", config);
-        Ok(())
+    #[cfg(test)]
+    mod default_config {
+        use super::*;
+
+        fn generate_default_config_file() -> Result<PathBuf> {
+            const CONFIG_FILE_PATH: &str = "test-config.toml";
+            let config = AssetConfig::default();
+            let config = toml::to_string(&config)?;
+            let config_file_path = PathBuf::from(CONFIG_FILE_PATH);
+            fs::write(&config_file_path, &config)?;
+            Ok(config_file_path)
+        }
+
+        #[test]
+        fn test_deserialize_config_file() -> Result<()> {
+            let config_file_path = generate_default_config_file()?;
+            let config = std::fs::read_to_string(&config_file_path)?;
+            let config: AssetConfig = toml::from_str(&config)?;
+            dbg!("{:?}", config);
+            // Clean up
+            fs::remove_file(config_file_path)?;
+            Ok(())
+        }
+
+        #[test]
+        fn test_serialize_default_config() -> Result<()> {
+            let config = AssetConfig::default();
+            let config = toml::to_string(&config)?;
+            dbg!("{}", config);
+            Ok(())
+        }
     }
 
-    #[test]
-    fn test_serialize_default_config() -> Result<()> {
-        let config = AssetConfig::default();
-        let config = toml::to_string(&config)?;
-        println!("{}", config);
-        Ok(())
+    #[cfg(test)]
+    mod ollama_config {
+        use super::*;
+
+        const CONFIG_FILE_PATH: &str = "test-ollama-config.toml";
+        const JSON_SCHEMA_FILE_PATH: &str = "test-ollama-schema.json";
+
+        fn generate_schema_file() -> Result<PathBuf> {
+            let schema = r#"{
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "$id": "http://example.com/example.schema.json",
+                "title": "Example",
+                "description": "An example schema in JSON",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Name of the animal",
+                        "type": "string"
+                    },
+                    "activity": {
+                        "description": "Activity of the animal",
+                        "type": "string"
+                    }
+                }
+            }"#;
+            let schema_file_path = PathBuf::from(JSON_SCHEMA_FILE_PATH);
+            fs::write(&schema_file_path, schema)?;
+            Ok(schema_file_path)
+        }
+
+        fn generate_default_config() -> AssetConfig {
+            let mut config = AssetConfig::default();
+            config.llm_structured_response.provider =
+                llm_structured_response::providers::LlmProviders::Ollama;
+            config.llm_structured_response.provider_config.url =
+                Some("http://localhost".to_string());
+            config.llm_structured_response.provider_config.port = Some(11434);
+            config.llm_structured_response.system_prompt = "System prompt".to_string();
+            config.llm_structured_response.json_schema_file = PathBuf::from(JSON_SCHEMA_FILE_PATH);
+            config.llm_structured_response.provider_config.model = "llama3.1".to_string();
+            config
+        }
+
+        fn generate_default_config_file() -> Result<PathBuf> {
+            let config = generate_default_config();
+            let config = toml::to_string(&config)?;
+            let config_file_path = PathBuf::from(CONFIG_FILE_PATH);
+            fs::write(&config_file_path, &config)?;
+            Ok(config_file_path)
+        }
+
+        #[tokio::test]
+        async fn test_ollama_config() -> Result<()> {
+            let prompt = "Prompt";
+            let config = generate_default_config();
+            let schema = generate_schema_file()?;
+            let asset = Asset::from_config(&config, Some(prompt)).await?;
+            dbg!("{:?}", asset);
+            // Clean up
+            fs::remove_file(schema)?;
+            Ok(())
+        }
+
+        #[tokio::test]
+        async fn test_ollama_config_from_file() -> Result<()> {
+            let config_file_path = generate_default_config_file()?;
+            let prompt = "Prompt";
+            let asset = Asset::from_config_file_and_prompt(&config_file_path, Some(prompt)).await?;
+            dbg!("{:?}", asset);
+            Ok(())
+        }
     }
 }

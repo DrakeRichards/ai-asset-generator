@@ -54,24 +54,31 @@ mod tests {
     use std::path::PathBuf;
     use toml::from_str;
 
-    #[test]
+    const TEST_CONFIG_PATH: &str = "test-config.toml";
+
     /// Generate a default CommandArgs struct and convert it to a TOML string, then save it to a file.
-    fn config_to_toml() -> Result<()> {
+    fn generate_toml_config() -> Result<PathBuf> {
         let config_args = GenerationParameters::default();
         let toml_string = toml::to_string(&config_args)?;
-        let toml_file = PathBuf::from("test/ai-images/default-config.toml");
+        let toml_file = PathBuf::from(TEST_CONFIG_PATH);
         fs::write(&toml_file, toml_string)?;
-        Ok(())
+        Ok(toml_file)
     }
 
     #[test]
     fn test_read_from_toml_file() -> Result<()> {
-        let toml_file = PathBuf::from("test/ai-images/example-config.toml");
+        let toml_file = generate_toml_config()?;
         let config_args = {
             let toml_content = fs::read_to_string(&toml_file)?;
             from_str::<GenerationParameters>(&toml_content)?
         };
-        println!("{:?}", config_args);
+        let expected_args = GenerationParameters::default();
+        // We can't compare the two structs directly they don't implement PartialEq.
+        // Instead, compare the serialized versions of the structs.
+        assert_eq!(
+            toml::to_string(&config_args)?,
+            toml::to_string(&expected_args)?
+        );
         Ok(())
     }
 }

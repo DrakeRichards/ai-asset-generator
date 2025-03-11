@@ -2,6 +2,7 @@
 
 use super::weighted_items::WeightedItemList;
 use anyhow::Result;
+use ex::fs;
 use std::path::PathBuf;
 
 /// A combination of several related weighted item lists. Used to generate random phrases.
@@ -17,7 +18,7 @@ impl RandomphraseGenerator {
     pub fn from_csv_files(csv_files: &Vec<PathBuf>) -> Result<RandomphraseGenerator> {
         let mut weighted_item_lists = Vec::new();
         for csv_file in csv_files {
-            let csv = std::fs::read_to_string(csv_file)?;
+            let csv = fs::read_to_string(csv_file)?;
             weighted_item_lists.push(WeightedItemList::from_csv(&csv)?);
         }
         Ok(RandomphraseGenerator {
@@ -95,7 +96,7 @@ mod tests {
         assert!(random_phrase.len() >= 2);
         // Clean up the CSV files.
         for csv_file in csv_files {
-            std::fs::remove_file(csv_file)?;
+            fs::remove_file(csv_file)?;
         }
         Ok(())
     }

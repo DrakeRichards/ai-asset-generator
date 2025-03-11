@@ -3,6 +3,7 @@ use csv::ReaderBuilder;
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
 use serde::Deserialize;
+use std::io::ErrorKind;
 
 /// A weighted item.
 #[derive(Debug, Deserialize)]
@@ -14,6 +15,7 @@ struct WeightedItem {
 }
 
 /// A vector of weighted items.
+#[derive(Debug)]
 pub struct WeightedItemList {
     /// The values in the list.
     pub values: Vec<String>,
@@ -34,7 +36,10 @@ impl WeightedItemList {
     pub fn from_csv(csv: &str) -> Result<WeightedItemList> {
         // Check that the CSV is not empty.
         if csv.is_empty() {
-            return Err(Error::msg("The CSV string is empty."));
+            return Err(Error::new(std::io::Error::new(
+                ErrorKind::InvalidData,
+                "The CSV string is empty.",
+            )));
         }
 
         // Build the csv reader
@@ -48,7 +53,10 @@ impl WeightedItemList {
 
         // No empty headers
         if headers.iter().any(|header| header.is_empty()) {
-            return Err(Error::msg("The CSV string has an empty header."));
+            return Err(Error::new(std::io::Error::new(
+                ErrorKind::InvalidData,
+                "The CSV string has an empty header.",
+            )));
         }
 
         // One header must be "value" and the other must be "weight"
@@ -56,9 +64,9 @@ impl WeightedItemList {
             .iter()
             .find(|header| *header != "value" && *header != "weight")
         {
-            return Err(Error::msg(format!(
-                "The CSV string has an invalid header: {}.",
-                header
+            return Err(Error::new(std::io::Error::new(
+                ErrorKind::InvalidData,
+                format!("The CSV string has an invalid header: {}.", header),
             )));
         }
 
@@ -77,8 +85,7 @@ impl WeightedItemList {
         let weights: Vec<u32> = csv_rows.iter().map(|item| item.weight).collect();
 
         // Create a WeightedIndex from the weights vector.
-        let weighted_index: WeightedIndex<u32> =
-            WeightedIndex::new(weights).map_err(|_| Error::msg("Invalid weights."))?;
+        let weighted_index: WeightedIndex<u32> = WeightedIndex::new(weights)?;
 
         Ok(WeightedItemList {
             values,
@@ -128,5 +135,38 @@ mod tests {
         let csv = "value,weight\na,1\nb,2\nc,3\nd,4\ne,5\n";
         let weighted_item_list = WeightedItemList::from_csv(csv).unwrap();
         assert_eq!(weighted_item_list.values, vec!["a", "b", "c", "d", "e"]);
+    }
+
+    #[test]
+    fn test_is_empty() {
+        // Should return an error telling the user that the CSV string is empty.
+        let csv = "";
+        let result = WeightedItemList::from_csv(csv);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "The CSV string is empty.");
+    }
+
+    #[test]
+    fn test_empty_headers() {
+        // Should return an error telling the user that the CSV string has an empty header.
+        let csv = ",\n";
+        let result = WeightedItemList::from_csv(csv);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "The CSV string has an empty header."
+        );
+    }
+
+    #[test]
+    fn test_invalid_header() {
+        // If the CSV string has a header that is not "value" or "weight", it should return an error with the invalid header.
+        let csv = "invalid,weight\na,1\nb,2\nc,3\nd,4\ne,5\n";
+        let result = WeightedItemList::from_csv(csv);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "The CSV string has an invalid header: invalid."
+        );
     }
 }

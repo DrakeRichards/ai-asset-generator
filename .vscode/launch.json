@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rpg-asset-generator'",
+            "name": "Debug executable 'ai-asset-generator'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=rpg-asset-generator",
-                    "--package=rpg-asset-generator"
+                    "--bin=ai-asset-generator",
+                    "--package=ai-asset-generator"
                 ],
                 "filter": {
-                    "name": "rpg-asset-generator",
+                    "name": "ai-asset-generator",
                     "kind": "bin"
                 }
             },
@@ -26,24 +26,30 @@
             "cwd": "${workspaceFolder}",
             "env": {
                 "RUST_BACKTRACE": "1",
-                "CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG": "true"
+                "CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG": "true",
+                "RUST_LIB_BACKTRACE": "1"
             }
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rpg-asset-generator'",
+            "name": "Debug unit tests in executable 'ai-asset-generator'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rpg-asset-generator",
-                    "--package=rpg-asset-generator"
+                    "--bin=ai-asset-generator",
+                    "--package=ai-asset-generator"
                 ],
                 "filter": {
-                    "name": "rpg-asset-generator",
+                    "name": "ai-asset-generator",
                     "kind": "bin"
                 }
+            },
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG": "true",
+                "RUST_LIB_BACKTRACE": "1"
             },
             "args": [],
             "cwd": "${workspaceFolder}"

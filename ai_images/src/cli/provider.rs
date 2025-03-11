@@ -1,7 +1,7 @@
 use clap::{Args, ValueEnum};
 use serde::{Deserialize, Serialize};
 
-#[derive(Args, Deserialize, Serialize, Debug)]
+#[derive(Args, Deserialize, Serialize, Debug, PartialEq)]
 pub struct Provider {
     /// The name of the provider to use.
     #[clap(short = 'n', long = "provider-name")]
@@ -21,13 +21,13 @@ impl Default for Provider {
     }
 }
 
-#[derive(ValueEnum, Clone, Debug, Deserialize, Serialize)]
+#[derive(ValueEnum, Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum ImageProviders {
     OpenAi,
     StableDiffusion,
 }
 
-#[derive(Args, Deserialize, Serialize, Debug)]
+#[derive(Args, Deserialize, Serialize, Debug, PartialEq)]
 pub struct ProviderConfig {
     /// The URL of the provider's API.
     #[clap(long)]

@@ -111,8 +111,10 @@ pub struct OllamaModels {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[tokio::test]
+    #[serial(ollama, local_server)]
     async fn test_request_structured_response() -> Result<()> {
         let provider = OllamaProvider {
             config: LlmProviderConfig {

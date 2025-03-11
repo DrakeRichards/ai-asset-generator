@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Parameters for the image generation request.
-#[derive(Args, Deserialize, Debug, Serialize, Clone)]
+#[derive(Args, Deserialize, Debug, Serialize, Clone, PartialEq)]
 pub struct ImageParams {
     /// The prompt to generate the image from.
     #[clap(short, long)]

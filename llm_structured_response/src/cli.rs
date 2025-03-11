@@ -23,7 +23,7 @@ pub struct ConfigFileArgs {
     pub config_file_path: std::path::PathBuf,
 }
 
-#[derive(Args, Debug, Deserialize, Clone, Default, Serialize)]
+#[derive(Args, Debug, Deserialize, Clone, Default, Serialize, PartialEq)]
 #[group(required = true)]
 pub struct ConfigArgs {
     /// The LLM provider to use.

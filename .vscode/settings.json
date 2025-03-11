@@ -1,0 +1,5 @@
+{
+    "lldb.script": {
+        "lang.rust.toolchain": "x86_64-pc-windows-gnu"
+    }
+}

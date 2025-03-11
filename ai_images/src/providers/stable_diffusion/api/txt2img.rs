@@ -65,8 +65,10 @@ mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
     use base64::Engine;
+    use serial_test::serial;
 
     #[tokio::test]
+    #[serial(stable_diffusion, local_server)]
     async fn test_post_txt2img() {
         let provider = StableDiffusionXLProvider::default();
         let request = Txt2ImgRequestBody {

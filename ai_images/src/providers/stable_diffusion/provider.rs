@@ -81,6 +81,7 @@ impl StableDiffusionXLProvider {
 mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
+    use anyhow::Error;
 
     #[tokio::test]
     async fn test_generate_image() -> Result<()> {
@@ -131,9 +132,17 @@ mod tests {
                     // Check if the prompt was added to the image.
                     assert_eq!(sanitized_comment, "UNICODEA photograph of a cat");
                 }
-                _ => panic!("Unable to read EXIF data: {:?}", user_comment.value),
+                _ => {
+                    // The UserComment field should be of type "undefined", which is actually utf-8
+                    let error_message = "User comment is not of type 'undefined'.";
+                    return Err(Error::new(exif::Error::InvalidFormat(error_message)));
+                }
             },
-            _ => panic!("User comment not found in EXIF data."),
+            _ => {
+                return Err(Error::new(exif::Error::NotFound(
+                    "User comment not found in EXIF data.",
+                )));
+            }
         }
         // Clean up the test output.
         std::fs::remove_file(image_path)?;

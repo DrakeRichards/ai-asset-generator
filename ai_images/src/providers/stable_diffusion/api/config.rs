@@ -28,8 +28,10 @@ impl StableDiffusionXLProvider {
 mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
+    use serial_test::serial;
 
     #[tokio::test]
+    #[serial(stable_diffusion)]
     async fn test_get_config() {
         let provider = StableDiffusionXLProvider::default();
         // Will fail if the local Stable Diffusion instance is not available.

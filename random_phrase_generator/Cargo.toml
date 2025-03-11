@@ -12,3 +12,8 @@ serde = { version = "1.0.216", features = ["derive"] }
 [build-dependencies]
 
 [dev-dependencies]
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"

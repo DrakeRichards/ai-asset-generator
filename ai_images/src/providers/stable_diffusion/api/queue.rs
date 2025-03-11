@@ -238,8 +238,10 @@ impl StableDiffusionXLProvider {
 mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
+    use serial_test::serial;
 
     #[tokio::test]
+    #[serial(stable_diffusion, local_server)]
     async fn test_start_image_generation_task() -> Result<()> {
         let provider = StableDiffusionXLProvider::default();
         let request_body = RequestBody::default();
@@ -250,6 +252,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial(stable_diffusion, local_server)]
     async fn test_poll_task() -> Result<()> {
         let provider = StableDiffusionXLProvider::default();
         let params = ImageParams::default();

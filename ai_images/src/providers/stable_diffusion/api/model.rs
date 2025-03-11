@@ -68,8 +68,10 @@ impl StableDiffusionXLProvider {
 mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
+    use serial_test::serial;
 
     #[tokio::test]
+    #[serial(stable_diffusion)]
     async fn test_get_model_name() {
         let provider = StableDiffusionXLProvider::default();
         let model_name = provider.get_model_name().await.unwrap();
@@ -78,6 +80,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial(stable_diffusion)]
     async fn test_get_models() -> Result<()> {
         let provider = StableDiffusionXLProvider::default();
         let models = provider.get_models().await?;
@@ -87,6 +90,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial(stable_diffusion, local_server)]
     async fn test_set_model() -> Result<()> {
         let provider = StableDiffusionXLProvider::default();
         let models = provider.get_models().await?;

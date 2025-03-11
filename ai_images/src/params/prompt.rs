@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// A prompt to generate an image from.
-#[derive(Args, Deserialize, Debug, Serialize, Clone)]
+#[derive(Args, Deserialize, Debug, Serialize, Clone, PartialEq)]
 pub struct Prompt {
     pub base: String,
     pub prefix: Option<String>,

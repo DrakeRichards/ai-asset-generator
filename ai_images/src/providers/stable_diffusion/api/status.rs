@@ -14,8 +14,10 @@ impl StableDiffusionXLProvider {
 mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
+    use serial_test::serial;
 
     #[tokio::test]
+    #[serial(stable_diffusion)]
     async fn test_is_up() {
         let provider = StableDiffusionXLProvider::default();
         let is_up = provider.is_up().await.unwrap();

@@ -1,20 +1,15 @@
-#![warn(clippy::unwrap_used)]
-#![warn(clippy::expect_used)]
-
 use ai_images::cli::GenerationParameters;
 use anyhow::{Error, Result};
+use ex::fs;
 use llm_structured_response::cli::ConfigArgs;
 use llm_structured_response::request::{Prompt, Schema};
 use minijinja::Environment;
 use random_phrase_generator::RandomphraseGenerator;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
-#[derive(Debug, Deserialize, Default, Serialize)]
+#[derive(Debug, Deserialize, Default, Serialize, PartialEq)]
 pub struct AssetConfig {
     pub output_directory: PathBuf,
     pub random_phrase_generator: RandomPhraseGeneratorConfig,
@@ -25,14 +20,14 @@ pub struct AssetConfig {
 
 type LlmStructuredResponseConfig = ConfigArgs;
 
-#[derive(Debug, Deserialize, Default, Serialize)]
+#[derive(Debug, Deserialize, Default, Serialize, PartialEq)]
 pub struct RandomPhraseGeneratorConfig {
     pub csv_files: Vec<PathBuf>,
 }
 
 type AiImagesConfig = GenerationParameters;
 
-#[derive(Debug, Deserialize, Default, Serialize)]
+#[derive(Debug, Deserialize, Default, Serialize, PartialEq)]
 pub struct MarkdownTemplateFillerConfig {
     pub template_file_path: PathBuf,
 }
@@ -100,12 +95,12 @@ impl AssetConfig {
     }
 
     /// Fill the markdown template with the image and the structured response
-    fn fill_template(&self, structured_response: Map<String, Value>) -> Result<String> {
+    fn fill_template(&self, structured_response: &Map<String, Value>) -> Result<String> {
         let template = fs::read_to_string(&self.markdown_template_filler.template_file_path)?;
         let mut env = Environment::new();
         env.add_template("template", &template)?;
         let templ = env.get_template("template")?;
-        let rendered = templ.render(&structured_response)?;
+        let rendered = templ.render(structured_response)?;
         Ok(rendered)
     }
 }
@@ -166,7 +161,27 @@ impl Asset {
         }
 
         // Fill the markdown template with the image and the structured response
-        let markdown: String = config.fill_template(llm_structured_response)?;
+        let markdown: Result<String> = config.fill_template(&llm_structured_response);
+
+        // If the markdown template is not filled, print an error message and save the structured response to a file
+        let markdown = match markdown {
+            Ok(markdown) => markdown,
+            Err(e) => {
+                eprintln!("Error filling the markdown template: {}", e);
+                let structured_response_file_path = config
+                    .output_directory
+                    .join(format!("{}.json", chrono::Utc::now().timestamp()));
+                // Convert the structured response to a JSON string
+                let llm_structured_response =
+                    serde_json::to_string_pretty(&llm_structured_response)?;
+                // Save the structured response to a file
+                fs::write(&structured_response_file_path, llm_structured_response)?;
+                return Err(Error::msg(format!(
+                    "The markdown template was not filled. The structured response was saved to {:?}",
+                    structured_response_file_path
+                )));
+            }
+        };
 
         // If output_dir is empty, save the markdown to the current directory
         let output_dir: PathBuf = if config.output_directory == PathBuf::new() {
@@ -196,28 +211,30 @@ impl Asset {
 mod tests {
     use super::*;
     use anyhow::Result;
+    use serial_test::serial;
+    use tempfile::{tempdir, TempDir};
 
     #[cfg(test)]
     mod default_config {
         use super::*;
 
-        fn generate_default_config_file() -> Result<PathBuf> {
-            const CONFIG_FILE_PATH: &str = "test-config.toml";
-            let config = AssetConfig::default();
-            let config = toml::to_string(&config)?;
-            let config_file_path = PathBuf::from(CONFIG_FILE_PATH);
+        fn generate_default_config_file(dir: &TempDir) -> Result<PathBuf> {
+            let config_file_path = dir.path().join("test-config.toml");
+            let config = toml::to_string(&AssetConfig::default())?;
             fs::write(&config_file_path, &config)?;
             Ok(config_file_path)
         }
 
         #[test]
-        fn test_deserialize_config_file() -> Result<()> {
-            let config_file_path = generate_default_config_file()?;
-            let config = std::fs::read_to_string(&config_file_path)?;
+        fn test_deserialize_default_config_file() -> Result<()> {
+            let dir = tempdir()?;
+            let config_file = generate_default_config_file(&dir)?;
+            let config = fs::read_to_string(&config_file)?;
             let config: AssetConfig = toml::from_str(&config)?;
-            dbg!("{:?}", config);
+            assert_eq!(config, AssetConfig::default());
             // Clean up
-            fs::remove_file(config_file_path)?;
+            drop(config_file);
+            dir.close()?;
             Ok(())
         }
 
@@ -235,27 +252,27 @@ mod tests {
         use super::*;
 
         const CONFIG_FILE_PATH: &str = "test-ollama-config.toml";
-        const JSON_SCHEMA_FILE_PATH: &str = "test-ollama-schema.json";
+        const JSON_SCHEMA_FILE_NAME: &str = "test-ollama-schema.json";
 
-        fn generate_schema_file() -> Result<PathBuf> {
+        fn generate_schema_file(dir: &TempDir) -> Result<PathBuf> {
             let schema = r#"{
-                "$schema": "http://json-schema.org/draft-07/schema#",
-                "$id": "http://example.com/example.schema.json",
-                "title": "Example",
-                "description": "An example schema in JSON",
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "description": "Name of the animal",
-                        "type": "string"
-                    },
-                    "activity": {
-                        "description": "Activity of the animal",
-                        "type": "string"
-                    }
-                }
-            }"#;
-            let schema_file_path = PathBuf::from(JSON_SCHEMA_FILE_PATH);
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://example.com/example.schema.json",
+    "title": "Example",
+    "description": "An example schema in JSON",
+    "type": "object",
+    "properties": {
+        "name": {
+            "description": "Name of the animal",
+            "type": "string"
+        },
+        "activity": {
+            "description": "Activity of the animal",
+            "type": "string"
+        }
+    }
+}"#;
+            let schema_file_path = dir.path().join(JSON_SCHEMA_FILE_NAME);
             fs::write(&schema_file_path, schema)?;
             Ok(schema_file_path)
         }
@@ -268,37 +285,74 @@ mod tests {
                 Some("http://localhost".to_string());
             config.llm_structured_response.provider_config.port = Some(11434);
             config.llm_structured_response.system_prompt = "System prompt".to_string();
-            config.llm_structured_response.json_schema_file = PathBuf::from(JSON_SCHEMA_FILE_PATH);
+            config.llm_structured_response.json_schema_file = PathBuf::from(JSON_SCHEMA_FILE_NAME);
             config.llm_structured_response.provider_config.model = "llama3.1".to_string();
             config
         }
 
-        fn generate_default_config_file() -> Result<PathBuf> {
-            let config = generate_default_config();
+        fn generate_default_config_file(
+            dir: &TempDir,
+            json_schema_file_path: &Path,
+        ) -> Result<PathBuf> {
+            let mut config = generate_default_config();
+            config.llm_structured_response.json_schema_file = json_schema_file_path.to_path_buf();
+            config.output_directory = dir.path().to_path_buf();
             let config = toml::to_string(&config)?;
-            let config_file_path = PathBuf::from(CONFIG_FILE_PATH);
+            let config_file_path = dir.path().join(CONFIG_FILE_PATH);
             fs::write(&config_file_path, &config)?;
             Ok(config_file_path)
         }
 
         #[tokio::test]
+        #[serial(ollama, local_server)]
         async fn test_ollama_config() -> Result<()> {
-            let prompt = "Prompt";
-            let config = generate_default_config();
-            let schema = generate_schema_file()?;
-            let asset = Asset::from_config(&config, Some(prompt)).await?;
-            dbg!("{:?}", asset);
+            let dir = tempdir()?;
+            let schema_file_path = generate_schema_file(&dir)?;
+            let mut config = generate_default_config();
+            config.llm_structured_response.json_schema_file = schema_file_path.clone();
+            config.output_directory = dir.path().to_path_buf();
+            let prompt: &str = "Prompt";
+            // Creating the asset will probably fail since the markdown template doesn't exist.
+            // That's expected though: all we care about is whether we can get a structured response.
+            let asset = Asset::from_config(&config, Some(prompt)).await;
             // Clean up
-            fs::remove_file(schema)?;
+            fs::remove_file(schema_file_path)?;
+            dir.close()?;
+            // Check that the error is a "file not found" error.
+            match asset {
+                Err(e) => {
+                    assert!(e
+                        .to_string()
+                        .contains("The markdown template was not filled."));
+                }
+                _ => return Err(Error::msg("Expected an error.")),
+            }
             Ok(())
         }
 
         #[tokio::test]
+        #[serial(ollama, local_server)]
         async fn test_ollama_config_from_file() -> Result<()> {
-            let config_file_path = generate_default_config_file()?;
+            let dir = tempdir()?;
+            let schema_file_path = generate_schema_file(&dir)?;
+            let config_file_path = generate_default_config_file(&dir, &schema_file_path)?;
             let prompt = "Prompt";
-            let asset = Asset::from_config_file_and_prompt(&config_file_path, Some(prompt)).await?;
-            dbg!("{:?}", asset);
+            // Creating the asset will probably fail since the markdown template doesn't exist.
+            // That's expected though: all we care about is whether we can get a structured response.
+            let asset = Asset::from_config_file_and_prompt(&config_file_path, Some(prompt)).await;
+            // Clean up
+            fs::remove_file(schema_file_path)?;
+            fs::remove_file(config_file_path)?;
+            dir.close()?;
+            // Check that the error is a "file not found" error.
+            match asset {
+                Err(e) => {
+                    assert!(e
+                        .to_string()
+                        .contains("The markdown template was not filled."));
+                }
+                _ => return Err(Error::msg("Expected an error.")),
+            }
             Ok(())
         }
     }

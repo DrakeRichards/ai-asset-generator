@@ -25,9 +25,17 @@ toml = "0.8.19"
 ollama-rs = { version = "0.2.7", git = "https://github.com/DrakeRichards/ollama-rs.git" }
 futures = "0.3.31"
 mini-tokio = "0.3.2"
+ex = "0.1.3"
 
 [build-dependencies]
 
 [dev-dependencies]
 image = "0.25.5"
 kamadak-exif = "0.6.1"
+serial_test = "3.2.0"
+tempfile = "3.18.0"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"

@@ -34,7 +34,7 @@ pub struct TomlArgs {
 }
 
 /// Generate images using an image generation API.
-#[derive(Args, Deserialize, Debug, Default, Serialize)]
+#[derive(Args, Deserialize, Debug, Default, Serialize, PartialEq)]
 #[group(required = false, multiple = true)]
 pub struct GenerationParameters {
     /// The image generation provider to use.
@@ -79,6 +79,7 @@ mod tests {
             toml::to_string(&config_args)?,
             toml::to_string(&expected_args)?
         );
+        fs::remove_file(&toml_file)?;
         Ok(())
     }
 }

@@ -1,8 +1,6 @@
-mod config;
-
+use ai_asset_generator::Asset;
 use anyhow::Result;
 use clap::Parser;
-use config::Asset;
 use std::path::PathBuf;
 
 #[tokio::main]

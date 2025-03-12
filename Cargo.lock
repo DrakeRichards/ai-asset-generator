@@ -41,6 +41,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ai_asset_generator"
+version = "0.2.0"
+dependencies = [
+ "ai_images",
+ "anyhow",
+ "chrono",
+ "clap",
+ "ex",
+ "llm_structured_response",
+ "minijinja",
+ "random_phrase_generator",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tempfile",
+ "tokio",
+ "toml",
+]
+
+[[package]]
 name = "ai_images"
 version = "0.1.0"
 dependencies = [
@@ -160,38 +180,6 @@ name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
-
-[[package]]
-name = "asset_generator"
-version = "0.2.0"
-dependencies = [
- "ai_images",
- "anyhow",
- "async-openai",
- "async-trait",
- "base64",
- "chrono",
- "clap",
- "csv",
- "dotenvy",
- "ex",
- "futures",
- "image",
- "kamadak-exif",
- "llm_structured_response",
- "mini-tokio",
- "minijinja",
- "ollama-rs",
- "rand",
- "random_phrase_generator",
- "reqwest",
- "serde",
- "serde_json",
- "serial_test",
- "tempfile",
- "tokio",
- "toml",
-]
 
 [[package]]
 name = "async-convert"
@@ -553,28 +541,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crossbeam"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1137cd7e7fc0fb5d3c5a8678be38ec56e819125d8d7907411fe24ccb943faca8"
-dependencies = [
- "crossbeam-channel",
- "crossbeam-deque",
- "crossbeam-epoch",
- "crossbeam-queue",
- "crossbeam-utils",
-]
-
-[[package]]
-name = "crossbeam-channel"
-version = "0.5.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06ba6d68e24814cb8de6bb986db8222d3a027d15872cabc0d18817bc3c0e4471"
-dependencies = [
- "crossbeam-utils",
-]
-
-[[package]]
 name = "crossbeam-deque"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -589,15 +555,6 @@ name = "crossbeam-epoch"
 version = "0.9.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e"
-dependencies = [
- "crossbeam-utils",
-]
-
-[[package]]
-name = "crossbeam-queue"
-version = "0.3.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f58bbc28f91df819d0aa2a2c00cd19754769c2fad90579b3592b1c9ba7a3115"
 dependencies = [
  "crossbeam-utils",
 ]
@@ -1629,26 +1586,6 @@ checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
 dependencies = [
  "mime",
  "unicase",
-]
-
-[[package]]
-name = "mini-tokio"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b95b2a0ad12f9c7236ccdf965bf43a1d198dc78e2bc66187e96e28d07558249d"
-dependencies = [
- "crossbeam",
- "mini-tokio-attr",
-]
-
-[[package]]
-name = "mini-tokio-attr"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ce9093fea6648fefcae3a98048f0e7c35d35e56013f442a8792d179c9e13663"
-dependencies = [
- "quote",
- "syn",
 ]
 
 [[package]]

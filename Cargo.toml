@@ -1,8 +1,69 @@
+[package]
+name = "ai_asset_generator"
+version = "0.2.0"
+description = "Generates random 'assets' using AI providers. Intended to be used to generate assets for games like characters, locations, and items."
+readme = "readme.md"
+license = "MIT"
+publish = false
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+ai_images = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+ex = { workspace = true }
+llm_structured_response = { workspace = true }
+minijinja = { workspace = true }
+random_phrase_generator = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+serial_test = { workspace = true }
+tempfile = { workspace = true }
+
 [workspace]
 resolver = "2"
-members = [
-    "asset_generator",
-    "ai_images",
-    "llm_structured_response",
-    "random_phrase_generator",
-]
+members = ["ai_images", "llm_structured_response", "random_phrase_generator"]
+
+[workspace.package]
+authors = ["Thomas Young <35073576+DrakeRichards@users.noreply.github.com>"]
+edition = "2024"
+
+[workspace.dependencies]
+ai_images = { path = "ai_images" }
+llm_structured_response = { path = "llm_structured_response" }
+random_phrase_generator = { path = "random_phrase_generator" }
+anyhow = "1.0.95"
+async-openai = "0.26.0"
+async-trait = "0.1.84"
+base64 = "0.22.1"
+chrono = "0.4.39"
+clap = { version = "4.5.23", features = ["derive"] }
+csv = "1.3.1"
+dotenvy = "0.15.7"
+minijinja = { version = "2.5.0", features = ["serde_json"] }
+rand = "0.8.5"
+reqwest = "0.12.12"
+serde = "1.0.216"
+serde_json = "1.0.134"
+tokio = { version = "1.42.0", features = ["rt-multi-thread"] }
+toml = "0.8.19"
+ollama-rs = { version = "0.2.7", git = "https://github.com/DrakeRichards/ollama-rs.git" }
+futures = "0.3.31"
+mini-tokio = "0.3.2"
+ex = "0.1.3"
+image = "0.25.5"
+kamadak-exif = "0.6.1"
+serial_test = "3.2.0"
+tempfile = "3.18.0"
+jsonschema = "0.29.0"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"

@@ -1,8 +1,10 @@
 use ai_images::cli::GenerationParameters;
 use anyhow::{Error, Result};
 use ex::fs;
-use llm_structured_response::cli::ConfigArgs;
-use llm_structured_response::request::{Prompt, Schema};
+use llm_structured_response::{
+    cli::ConfigArgs,
+    request::{Prompt, Schema},
+};
 use minijinja::Environment;
 use random_phrase_generator::RandomphraseGenerator;
 use serde::{Deserialize, Serialize};
@@ -212,7 +214,7 @@ mod tests {
     use super::*;
     use anyhow::Result;
     use serial_test::serial;
-    use tempfile::{tempdir, TempDir};
+    use tempfile::{TempDir, tempdir};
 
     #[cfg(test)]
     mod default_config {
@@ -321,9 +323,10 @@ mod tests {
             // Check that the error is a "file not found" error.
             match asset {
                 Err(e) => {
-                    assert!(e
-                        .to_string()
-                        .contains("The markdown template was not filled."));
+                    assert!(
+                        e.to_string()
+                            .contains("The markdown template was not filled.")
+                    );
                 }
                 _ => return Err(Error::msg("Expected an error.")),
             }
@@ -347,9 +350,10 @@ mod tests {
             // Check that the error is a "file not found" error.
             match asset {
                 Err(e) => {
-                    assert!(e
-                        .to_string()
-                        .contains("The markdown template was not filled."));
+                    assert!(
+                        e.to_string()
+                            .contains("The markdown template was not filled.")
+                    );
                 }
                 _ => return Err(Error::msg("Expected an error.")),
             }

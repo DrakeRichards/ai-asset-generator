@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::weighted_items::WeightedItemList;
+use crate::weighted_items::WeightedItemList;
 use anyhow::Result;
 use ex::fs;
 use std::path::PathBuf;

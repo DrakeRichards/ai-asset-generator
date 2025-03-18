@@ -1,14 +1,11 @@
 use ai_images::cli::GenerationParameters;
 use anyhow::{Error, Result};
 use ex::fs;
-use llm_structured_response::{
-    cli::ConfigArgs,
-    request::{Prompt, Schema},
-};
+use llm_structured_response::{CliConfigArgs, Prompt};
 use minijinja::Environment;
 use random_phrase_generator::RandomphraseGenerator;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, from_str};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize, Default, Serialize, PartialEq)]
@@ -20,7 +17,7 @@ pub struct AssetConfig {
     pub markdown_template_filler: MarkdownTemplateFillerConfig,
 }
 
-type LlmStructuredResponseConfig = ConfigArgs;
+type LlmStructuredResponseConfig = CliConfigArgs;
 
 #[derive(Debug, Deserialize, Default, Serialize, PartialEq)]
 pub struct RandomPhraseGeneratorConfig {
@@ -54,7 +51,7 @@ impl AssetConfig {
         // Define the schema for the structured response
         let schema_text: String =
             fs::read_to_string(&self.llm_structured_response.json_schema_file)?;
-        let schema: Schema = Schema::from_json_string(&schema_text)?;
+        let schema: Value = from_str(&schema_text)?;
 
         // Create the prompt object
         let prompt = Prompt {
@@ -67,11 +64,10 @@ impl AssetConfig {
             .llm_structured_response
             .provider
             .request_structured_response(
-                self.llm_structured_response.provider_config.clone(),
+                &self.llm_structured_response.provider_config,
                 &schema,
                 &prompt,
-            )
-            .await?;
+            )?;
 
         Ok(llm_structured_response)
     }
@@ -252,6 +248,7 @@ mod tests {
     #[cfg(test)]
     mod ollama_config {
         use super::*;
+        use llm_structured_response::LlmProviders;
 
         const CONFIG_FILE_PATH: &str = "test-ollama-config.toml";
         const JSON_SCHEMA_FILE_NAME: &str = "test-ollama-schema.json";
@@ -281,8 +278,7 @@ mod tests {
 
         fn generate_default_config() -> AssetConfig {
             let mut config = AssetConfig::default();
-            config.llm_structured_response.provider =
-                llm_structured_response::providers::LlmProviders::Ollama;
+            config.llm_structured_response.provider = LlmProviders::Ollama;
             config.llm_structured_response.provider_config.url =
                 Some("http://localhost".to_string());
             config.llm_structured_response.provider_config.port = Some(11434);

@@ -12,7 +12,7 @@ pub struct Cli {
 
     /// Manually specify configuration options.
     #[command(flatten)]
-    pub config: Option<ConfigArgs>,
+    pub config: Option<CliConfigArgs>,
 }
 
 #[derive(Args, Debug, Deserialize)]
@@ -25,7 +25,7 @@ pub struct ConfigFileArgs {
 
 #[derive(Args, Debug, Deserialize, Clone, Default, Serialize, PartialEq)]
 #[group(required = true)]
-pub struct ConfigArgs {
+pub struct CliConfigArgs {
     /// The LLM provider to use.
     #[arg(short, long)]
     pub provider: LlmProviders,

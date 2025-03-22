@@ -3,52 +3,52 @@
 //! # Example
 //!
 //! ```rust
-//! use llm_structured_response::{LlmProviderConfig, LlmProviders, Prompt};
-//! use serde_json::{from_str, Value};
-//! use jsonschema::validator_for;
+//! use anyhow::Result;
+//! use llm_structured_response::{LlmProviderConfig, LlmProviders, Prompt, StructuredOutputFormat};
+//! use serde_json::from_str;
 //!
-//! fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!    let provider = LlmProviders::OpenAi;
-//!    let config = LlmProviderConfig {
-//!        model: "gpt-4o".to_string(),
-//!        ..Default::default()
-//!    };
-//!    let schema: Value = from_str(
-//!        r#"
-//!{
-//!    "name": "Student",
-//!    "description": "A student in college.",
-//!    "schema": {
-//!        "type": "object",
-//!        "properties": {
-//!            "name": {
-//!                "type": "string"
-//!            },
-//!            "age": {
-//!                "type": "integer"
-//!            },
-//!            "is_student": {
-//!                "type": "boolean"
-//!            }
-//!        },
-//!        "required": ["name", "age", "is_student"],
-//!        "additionalProperties": false
-//!    }
-//!}
-//!    "#,
-//!    )?;
-//!    let prompt = Prompt {
-//!        system: "You are an AI assistant that generates random students.".to_string(),
-//!        initial: "Generate a random student using the provided JSON schema.".to_string(),
-//!    };
-//!    let response = provider.request_structured_response(&config, &schema, &prompt)?;
-//!    assert!(!response.is_empty());
-//!    // Check that the response validates against the schema.
-//!    let validator = validator_for(&schema)?;
-//!    let response_json: Value = from_str(&response)?;
-//!    assert!(validator.is_valid(&response_json));
-//!    Ok(())
+//! let provider = LlmProviders::OpenAi;
+//! let config = LlmProviderConfig::default_for_provider(&provider);
+//! let schema: StructuredOutputFormat = from_str(
+//!     r#"
+//! {
+//!     "name": "Student",
+//!     "schema": {
+//!         "type": "object",
+//!         "properties": {
+//!             "name": {
+//!                 "type": "string"
+//!             },
+//!             "age": {
+//!                 "type": "integer"
+//!             },
+//!             "major": {
+//!                 "type": "string"
+//!             }
+//!         },
+//!         "required": ["name", "age", "major"]
+//!     }
 //! }
+//! "#,
+//! ).unwrap();
+//! let prompt = Prompt {
+//!     system: "You are an AI assistant that generates random students.".to_string(),
+//!     initial: "Generate a random student using the provided JSON schema.".to_string(),
+//! };
+//! let response = provider.request_structured_response(&config, schema, &prompt).unwrap();
+//! assert!(!response.is_empty());
+//! // Check that the response validates against the schema.
+//!
+//! #[derive(Debug, serde::Deserialize)]
+//! struct Student {
+//!     pub name: String,
+//!     pub age: u8,
+//!     pub major: String,
+//! }
+//! let response_json: Student = from_str(&response).unwrap();
+//! assert!(!response_json.name.is_empty());
+//! assert!(response_json.age > 0);
+//! assert!(!response_json.major.is_empty());
 //! ```
 
 #![deny(unused_crate_dependencies)]
@@ -58,6 +58,7 @@ mod providers;
 mod request;
 
 pub use cli::CliConfigArgs;
+pub use llm::chat::StructuredOutputFormat;
 pub use providers::{LlmProviderConfig, LlmProviders};
 pub use request::Prompt;
 
@@ -65,19 +66,17 @@ pub use request::Prompt;
 mod tests {
     use super::*;
     use anyhow::Result;
-    use serde_json::{Value, from_str};
+    use serde_json::from_str;
 
     #[test]
-    fn test_ollama() -> Result<()> {
-        let provider = LlmProviders::Ollama;
-        let config = LlmProviderConfig {
-            model: "llama3.1".to_string(),
-            ..Default::default()
-        };
-        let schema = from_str(
-            r#"{
-            "description": "A student in college.",
-            "name": "Student",
+    fn test_openai() -> Result<()> {
+        let provider = LlmProviders::OpenAi;
+        let config = LlmProviderConfig::default_for_provider(&provider);
+        let schema: StructuredOutputFormat = from_str(
+            r#"
+    {
+        "name": "Student",
+        "schema": {
             "type": "object",
             "properties": {
                 "name": {
@@ -91,18 +90,28 @@ mod tests {
                 }
             },
             "required": ["name", "age", "major"]
-        }"#,
+        }
+    }
+    "#,
         )?;
         let prompt = Prompt {
             system: "You are an AI assistant that generates random students.".to_string(),
             initial: "Generate a random student using the provided JSON schema.".to_string(),
         };
-        let response = provider.request_structured_response(&config, &schema, &prompt)?;
+        let response = provider.request_structured_response(&config, schema, &prompt)?;
         assert!(!response.is_empty());
         // Check that the response validates against the schema.
-        let validator = jsonschema::validator_for(&schema)?;
-        let response_json: Value = from_str(&response)?;
-        assert!(validator.is_valid(&response_json));
+
+        #[derive(Debug, serde::Deserialize)]
+        struct Student {
+            pub name: String,
+            pub age: u8,
+            pub major: String,
+        }
+        let response_json: Student = from_str(&response)?;
+        assert!(!response_json.name.is_empty());
+        assert!(response_json.age > 0);
+        assert!(!response_json.major.is_empty());
         Ok(())
     }
 }

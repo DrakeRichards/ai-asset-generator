@@ -5,9 +5,9 @@ edition.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-async-openai = { workspace = true }
-async-trait = { workspace = true }
-base64 = { workspace = true }
+async-openai = "0.26.0"
+async-trait = "0.1.84"
+base64 = "0.22.1"
 chrono = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 dotenvy = { workspace = true }
@@ -17,8 +17,8 @@ serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [dev-dependencies]
-image = { workspace = true }
-kamadak-exif = { workspace = true }
+image = "0.25.5"
+kamadak-exif = "0.6.1"
 toml = { workspace = true }
 serial_test = { workspace = true }
 

@@ -1,12 +1,15 @@
 use ai_images::cli::GenerationParameters;
 use anyhow::{Error, Result};
 use ex::fs;
-use llm_structured_response::{CliConfigArgs, Prompt};
+pub use llm_structured_response::{
+    CliConfigArgs, LlmProviderConfig, Prompt, StructuredOutputFormat,
+};
 use minijinja::Environment;
 use random_phrase_generator::RandomphraseGenerator;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, from_str};
 use std::path::{Path, PathBuf};
+use tokio::runtime::Runtime;
 
 #[derive(Debug, Deserialize, Default, Serialize, PartialEq)]
 pub struct AssetConfig {
@@ -47,11 +50,12 @@ impl AssetConfig {
     }
 
     /// Send the initial prompt to the LLM API to get a structured response
-    async fn generate_structured_response(&self, initial_prompt: &str) -> Result<String> {
+    fn generate_structured_response(&self, initial_prompt: &str) -> Result<String> {
         // Define the schema for the structured response
         let schema_text: String =
             fs::read_to_string(&self.llm_structured_response.json_schema_file)?;
         let schema: Value = from_str(&schema_text)?;
+        let schema: StructuredOutputFormat = serde_json::from_value(schema)?;
 
         // Create the prompt object
         let prompt = Prompt {
@@ -59,21 +63,23 @@ impl AssetConfig {
             initial: initial_prompt.to_string(),
         };
 
+        // Generate a default LLM configuration for the provider, if not provided
+        let config = match self.llm_structured_response.provider_config {
+            Some(ref config) => config.clone(),
+            None => LlmProviderConfig::default_for_provider(&self.llm_structured_response.provider),
+        };
+
         // Send the initial prompt to the LLM API to get a structured response
         let llm_structured_response = self
             .llm_structured_response
             .provider
-            .request_structured_response(
-                &self.llm_structured_response.provider_config,
-                &schema,
-                &prompt,
-            )?;
+            .request_structured_response(&config, schema, &prompt)?;
 
         Ok(llm_structured_response)
     }
 
     /// Generate an image based on the structured response
-    async fn generate_image(&self, prompt_from_response: &str) -> Result<PathBuf> {
+    fn generate_image(&self, prompt_from_response: &str) -> Result<PathBuf> {
         // Initialize the provider.
         let provider = self.ai_images.provider.to_image_provider()?;
         // Set up the prompt.
@@ -88,7 +94,11 @@ impl AssetConfig {
         let mut image_params: ai_images::ImageParams = self.ai_images.params.clone();
         image_params.prompt = image_prompt;
         // Generate the image.
-        let image = provider.generate_image(image_params).await?;
+        let rt = Runtime::new()?;
+        let image = rt.block_on(async {
+            let image_params = image_params.clone();
+            tokio::spawn(async move { provider.generate_image(image_params).await }).await?
+        })?;
         Ok(image)
     }
 
@@ -111,22 +121,19 @@ pub struct Asset {
 }
 
 impl Asset {
-    pub async fn from_config_file_and_prompt(
-        config_file: &Path,
-        prompt: Option<&str>,
-    ) -> Result<Asset> {
+    pub fn from_config_file_and_prompt(config_file: &Path, prompt: Option<&str>) -> Result<Asset> {
         let config = AssetConfig::from_toml_file(config_file)?;
-        let asset = Asset::from_config(&config, prompt).await?;
+        let asset = Asset::from_config(&config, prompt)?;
         Ok(asset)
     }
 
-    async fn from_config(config: &AssetConfig, user_prompt: Option<&str>) -> Result<Asset> {
+    pub fn from_config(config: &AssetConfig, user_prompt: Option<&str>) -> Result<Asset> {
         let initial_prompt = match user_prompt {
             Some(prompt) => prompt.to_string(),
             _ => config.generate_random_phrase()?,
         };
 
-        let llm_structured_response = config.generate_structured_response(&initial_prompt).await?;
+        let llm_structured_response = config.generate_structured_response(&initial_prompt)?;
         let llm_structured_response: Value = serde_json::from_str(&llm_structured_response)?;
 
         // Generate an image based on the structured response and save it
@@ -134,7 +141,7 @@ impl Asset {
             .get("image_prompt")
             .unwrap_or(&Value::Null);
         let image_path: Option<PathBuf> = match image_prompt {
-            Value::String(prompt) => Some(config.generate_image(prompt).await?),
+            Value::String(prompt) => Some(config.generate_image(prompt)?),
             _ => None,
         };
         // Strip the image path to the filename
@@ -253,21 +260,24 @@ mod tests {
         const CONFIG_FILE_PATH: &str = "test-ollama-config.toml";
         const JSON_SCHEMA_FILE_NAME: &str = "test-ollama-schema.json";
 
+        /// Generate a temporary JSON schema file used for testing
         fn generate_schema_file(dir: &TempDir) -> Result<PathBuf> {
             let schema = r#"{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://example.com/example.schema.json",
-    "title": "Example",
+    "name": "Example",
     "description": "An example schema in JSON",
-    "type": "object",
-    "properties": {
-        "name": {
-            "description": "Name of the animal",
-            "type": "string"
-        },
-        "activity": {
-            "description": "Activity of the animal",
-            "type": "string"
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "description": "Name of the animal",
+                "type": "string"
+            },
+            "activity": {
+                "description": "Activity of the animal",
+                "type": "string"
+            }
         }
     }
 }"#;
@@ -276,15 +286,15 @@ mod tests {
             Ok(schema_file_path)
         }
 
+        /// Generate a temporary configuration file for testing
         fn generate_default_config() -> AssetConfig {
             let mut config = AssetConfig::default();
             config.llm_structured_response.provider = LlmProviders::Ollama;
-            config.llm_structured_response.provider_config.url =
-                Some("http://localhost".to_string());
-            config.llm_structured_response.provider_config.port = Some(11434);
+            config.llm_structured_response.provider_config = Some(
+                LlmProviderConfig::default_for_provider(&config.llm_structured_response.provider),
+            );
             config.llm_structured_response.system_prompt = "System prompt".to_string();
             config.llm_structured_response.json_schema_file = PathBuf::from(JSON_SCHEMA_FILE_NAME);
-            config.llm_structured_response.provider_config.model = "llama3.1".to_string();
             config
         }
 
@@ -301,9 +311,9 @@ mod tests {
             Ok(config_file_path)
         }
 
-        #[tokio::test]
+        #[test]
         #[serial(ollama, local_server)]
-        async fn test_ollama_config() -> Result<()> {
+        fn test_ollama_config() -> Result<()> {
             let dir = tempdir()?;
             let schema_file_path = generate_schema_file(&dir)?;
             let mut config = generate_default_config();
@@ -312,7 +322,7 @@ mod tests {
             let prompt: &str = "Prompt";
             // Creating the asset will probably fail since the markdown template doesn't exist.
             // That's expected though: all we care about is whether we can get a structured response.
-            let asset = Asset::from_config(&config, Some(prompt)).await;
+            let asset = Asset::from_config(&config, Some(prompt));
             // Clean up
             fs::remove_file(schema_file_path)?;
             dir.close()?;
@@ -329,16 +339,16 @@ mod tests {
             Ok(())
         }
 
-        #[tokio::test]
+        #[test]
         #[serial(ollama, local_server)]
-        async fn test_ollama_config_from_file() -> Result<()> {
+        fn test_ollama_config_from_file() -> Result<()> {
             let dir = tempdir()?;
             let schema_file_path = generate_schema_file(&dir)?;
             let config_file_path = generate_default_config_file(&dir, &schema_file_path)?;
             let prompt = "Prompt";
             // Creating the asset will probably fail since the markdown template doesn't exist.
             // That's expected though: all we care about is whether we can get a structured response.
-            let asset = Asset::from_config_file_and_prompt(&config_file_path, Some(prompt)).await;
+            let asset = Asset::from_config_file_and_prompt(&config_file_path, Some(prompt));
             // Clean up
             fs::remove_file(schema_file_path)?;
             fs::remove_file(config_file_path)?;
@@ -346,6 +356,7 @@ mod tests {
             // Check that the error is a "file not found" error.
             match asset {
                 Err(e) => {
+                    dbg!(e.to_string());
                     assert!(
                         e.to_string()
                             .contains("The markdown template was not filled.")

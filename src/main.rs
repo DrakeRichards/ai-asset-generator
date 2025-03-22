@@ -3,11 +3,9 @@ use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let args = AssetCli::parse();
-    let asset =
-        Asset::from_config_file_and_prompt(&args.config_file, args.prompt.as_deref()).await?;
+    let asset = Asset::from_config_file_and_prompt(&args.config_file, args.prompt.as_deref())?;
     // Print the paths to the generated asset as a JSON string
     println!("{}", serde_json::to_string(&asset)?);
     Ok(())
